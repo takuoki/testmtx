@@ -1,0 +1,8 @@
+{
+  "int_key": 102,
+  "string_key": "string value 201",
+  "object_key": {
+    "key1": 202,
+    "key2": "string value 202"
+  }
+}

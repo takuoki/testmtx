@@ -1,0 +1,10 @@
+{
+  "int_key": 103,
+  "bool_key": false,
+  "array_key": [
+    {
+      "key3": 303,
+      "key4": "string value 303"
+    }
+  ]
+}
