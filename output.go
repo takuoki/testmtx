@@ -65,7 +65,9 @@ func (o *output) Main(ss []*sheet.Sheet, f format) error {
 	for _, s := range ss {
 		for k, v := range s.DataMap {
 			dir := fmt.Sprintf("out/%s", k)
-			// TODO create dir
+			if err := os.MkdirAll(dir, 0777); err != nil {
+				return err
+			}
 			for _, c := range s.Cases {
 				err := o.outCase(f, s.Name, dir, c, v)
 				if err != nil {

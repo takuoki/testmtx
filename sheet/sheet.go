@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // Get is ...
@@ -50,12 +51,17 @@ func parse(sheetName string, d [][]interface{}) (*Sheet, error) {
 
 	// cases
 	for ci := cCaseStart; ci < len(d[rCase]); ci++ {
-		// TODO check same casename
-		cName := Casename(fmt.Sprintf("%s", d[rCase][ci]))
-		if cName == "" {
+		cn := fmt.Sprintf("%s", d[rCase][ci])
+		if cn == "" {
 			break
 		}
-		s.Cases = append(s.Cases, cName)
+		for _, n := range s.Cases {
+			if Casename(cn) == n {
+				return nil, fmt.Errorf("case name is duplicated (sheet=%s, case=%s)", sheetName, cn)
+			}
+		}
+
+		s.Cases = append(s.Cases, Casename(strings.Replace(cn, " ", "_", -1)))
 	}
 
 	// properties

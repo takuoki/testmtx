@@ -26,7 +26,7 @@ image...
 ### Command
 
 ```txt
-./testmtx -s {SpreadsheetID} out
+./testmtx out -s {SpreadsheetID}
 ```
 
 ### Generated File
