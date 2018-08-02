@@ -1,0 +1,119 @@
+package sheet
+
+const (
+	strNew   = "*new"
+	strEmpty = "*empty"
+
+	typeObj  = "object"
+	typeAry  = "array"
+	typeStr  = "string"
+	typeInt  = "int"
+	typeBool = "bool"
+
+	rCase      = 2
+	cCaseStart = 12 // M
+
+	rDataStart = 3
+	cPropStart = 1  // B
+	cPropEnd   = 10 // K
+	cType      = 11 // L
+)
+
+// Sheet is ...
+type Sheet struct {
+	Name    string
+	Cases   []Casename
+	DataMap map[string]Data
+}
+
+// Casename is ...
+type Casename string
+
+// Data is ...
+type Data interface {
+	IsNil(Casename) bool
+}
+
+// DObject is ...
+type DObject struct {
+	Values        map[Casename]bool
+	PropertyNames []string
+	Properties    map[string]Data
+}
+
+// IsNil is ...
+func (d *DObject) IsNil(c Casename) bool {
+	return !d.Values[c]
+}
+
+// LastProperty is ...
+func (d *DObject) LastProperty(c Casename, propName string) bool {
+	check := false
+	last := true
+	for _, pn := range d.PropertyNames {
+		if pn == propName {
+			check = true
+			continue
+		}
+		if check {
+			if !d.Properties[pn].IsNil(c) {
+				last = false
+				break
+			}
+		}
+	}
+	return last
+}
+
+// DArray is ...
+type DArray struct {
+	Values   map[Casename]bool
+	Elements []Data
+}
+
+// IsNil is ...
+func (d *DArray) IsNil(c Casename) bool {
+	return !d.Values[c]
+}
+
+// LastEntity is ...
+func (d *DArray) LastEntity(c Casename, i int) bool {
+	last := true
+	for i = i + 1; i < len(d.Elements); i++ {
+		if !d.Elements[i].IsNil(c) {
+			last = false
+			break
+		}
+	}
+	return last
+}
+
+// DString is ...
+type DString struct {
+	Values map[Casename]*string
+}
+
+// IsNil is ...
+func (d *DString) IsNil(c Casename) bool {
+	return d.Values[c] == nil
+}
+
+// DInt is ...
+type DInt struct {
+	Values map[Casename]*int
+}
+
+// IsNil is ...
+func (d *DInt) IsNil(c Casename) bool {
+	return d.Values[c] == nil
+}
+
+// DBool is ...
+type DBool struct {
+	Values map[Casename]*bool
+}
+
+// IsNil is ...
+func (d *DBool) IsNil(c Casename) bool {
+	return d.Values[c] == nil
+}
