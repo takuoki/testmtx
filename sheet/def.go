@@ -1,14 +1,23 @@
 package sheet
 
 const (
+	// TypeObj is ...
+	TypeObj = "object"
+
+	// TypeAry is ...
+	TypeAry = "array"
+
+	// TypeStr is ...
+	TypeStr = "string"
+
+	// TypeNum is ...
+	TypeNum = "number"
+
+	// TypeBool is ...
+	TypeBool = "bool"
+
 	strNew   = "*new"
 	strEmpty = "*empty"
-
-	typeObj  = "object"
-	typeAry  = "array"
-	typeStr  = "string"
-	typeInt  = "int"
-	typeBool = "bool"
 
 	rCase      = 2
 	cCaseStart = 12 // M
@@ -17,6 +26,9 @@ const (
 	cPropStart = 1  // B
 	cPropEnd   = 10 // K
 	cType      = 11 // L
+
+	// PropLevel is ..
+	PropLevel = cPropEnd - cPropStart + 1
 )
 
 // Sheet is ...
@@ -98,13 +110,13 @@ func (d *DString) IsNil(c Casename) bool {
 	return d.Values[c] == nil
 }
 
-// DInt is ...
-type DInt struct {
-	Values map[Casename]*int
+// DNum is ...
+type DNum struct {
+	Values map[Casename]*string
 }
 
 // IsNil is ...
-func (d *DInt) IsNil(c Casename) bool {
+func (d *DNum) IsNil(c Casename) bool {
 	return d.Values[c] == nil
 }
 

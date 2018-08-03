@@ -13,8 +13,8 @@ func (f *jsonf) OutData(out io.Writer, d sheet.Data, c sheet.Casename, i int) er
 	switch t := d.(type) {
 	case *sheet.DString:
 		f.outString(out, t, c)
-	case *sheet.DInt:
-		f.outInt(out, t, c)
+	case *sheet.DNum:
+		f.outNum(out, t, c)
 	case *sheet.DBool:
 		f.outBool(out, t, c)
 	case *sheet.DObject:
@@ -67,9 +67,9 @@ func (f *jsonf) outString(out io.Writer, d *sheet.DString, c sheet.Casename) {
 	}
 }
 
-func (f *jsonf) outInt(out io.Writer, d *sheet.DInt, c sheet.Casename) {
+func (f *jsonf) outNum(out io.Writer, d *sheet.DNum, c sheet.Casename) {
 	if !d.IsNil(c) {
-		out.Write([]byte(fmt.Sprintf("%d", *d.Values[c])))
+		out.Write([]byte(fmt.Sprintf("%s", *d.Values[c])))
 	}
 }
 

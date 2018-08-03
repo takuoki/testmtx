@@ -84,7 +84,7 @@ func parse(sheetName string, d [][]interface{}) (*Sheet, error) {
 func getData(d [][]interface{}, ri, l int, cases []Casename) (Data, int, error) {
 	var dt Data
 	switch tStr := d[ri][cType]; tStr {
-	case typeStr:
+	case TypeStr:
 		v, err := getStringValues(d[ri], cases)
 		if err != nil {
 			return nil, ri, err
@@ -92,15 +92,15 @@ func getData(d [][]interface{}, ri, l int, cases []Casename) (Data, int, error) 
 		dt = &DString{
 			Values: v,
 		}
-	case typeInt:
-		v, err := getIntValues(d[ri], cases)
+	case TypeNum:
+		v, err := getNumValues(d[ri], cases)
 		if err != nil {
 			return nil, ri, err
 		}
-		dt = &DInt{
+		dt = &DNum{
 			Values: v,
 		}
-	case typeBool:
+	case TypeBool:
 		v, err := getBoolValues(d[ri], cases)
 		if err != nil {
 			return nil, ri, err
@@ -108,7 +108,7 @@ func getData(d [][]interface{}, ri, l int, cases []Casename) (Data, int, error) 
 		dt = &DBool{
 			Values: v,
 		}
-	case typeObj:
+	case TypeObj:
 		v, err := getObjAryValues(d[ri], cases)
 		if err != nil {
 			return nil, ri, err
@@ -134,7 +134,7 @@ func getData(d [][]interface{}, ri, l int, cases []Casename) (Data, int, error) 
 			PropertyNames: pns,
 			Properties:    pm,
 		}
-	case typeAry:
+	case TypeAry:
 		v, err := getObjAryValues(d[ri], cases)
 		if err != nil {
 			return nil, ri, err
@@ -237,9 +237,9 @@ func getStringValues(rowData []interface{}, cases []Casename) (map[Casename]*str
 	return m, nil
 }
 
-func getIntValues(rowData []interface{}, cases []Casename) (map[Casename]*int, error) {
+func getNumValues(rowData []interface{}, cases []Casename) (map[Casename]*string, error) {
 
-	m := make(map[Casename]*int)
+	m := make(map[Casename]*string)
 
 	i := 0
 	for ci := cCaseStart; ci < len(rowData); ci++ {
@@ -251,11 +251,11 @@ func getIntValues(rowData []interface{}, cases []Casename) (map[Casename]*int, e
 		case "":
 			m[cases[i]] = nil
 		default:
-			v, err := strconv.Atoi(str)
+			_, err := strconv.ParseFloat(str, 64)
 			if err != nil {
-				return nil, fmt.Errorf("getIntValues: cannot convert int value (%s)", str)
+				return nil, fmt.Errorf("getNumValues: cannot convert int value (%s)", str)
 			}
-			m[cases[i]] = &v
+			m[cases[i]] = &str
 		}
 
 		i++

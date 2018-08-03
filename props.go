@@ -1,9 +1,23 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io"
+	"os"
+	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/urfave/cli"
+
+	"github.com/takuoki/testmtx/sheet"
+)
+
+var (
+	lf = []byte("\n")
 )
 
 func init() {
@@ -19,8 +33,8 @@ func init() {
 				Usage: "golang file witch target struct is written",
 			},
 			cli.StringFlag{
-				Name:  "struct, s",
-				Usage: "target struct name",
+				Name:  "type, t",
+				Usage: "target type name",
 			},
 		},
 	})
@@ -29,6 +43,143 @@ func init() {
 type prop struct{}
 
 func (p *prop) Run(c *cli.Context) error {
-	fmt.Println("not implemented")
+	return p.Main(c.String("file"), c.String("type"))
+}
+
+func (p *prop) Main(file, tName string) error {
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, file, nil, 0)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range f.Decls {
+		if gd, ok := d.(*ast.GenDecl); ok {
+			for _, s := range gd.Specs {
+				if ts, ok := s.(*ast.TypeSpec); ok {
+					if ts.Name.Name == tName {
+						out := os.Stdout
+						out.Write([]byte(strcase.ToSnake(tName)))
+						p.outTab4Type(out, 0)
+						return p.outData(out, ts.Type, 0)
+					}
+				}
+			}
+		}
+	}
+
+	return errors.New("no such type")
+}
+
+func (p *prop) outData(out io.Writer, d ast.Expr, i int) error {
+
+	var err error
+
+	switch t := d.(type) {
+	case *ast.StructType:
+		err = p.outObject(out, t, i)
+	case *ast.ArrayType:
+		err = p.outArray(out, t, i)
+	case *ast.Ident:
+		err = p.outIdent(out, t, i)
+	case *ast.StarExpr:
+		err = p.outData(out, t.X, i)
+	case *ast.SelectorExpr:
+		err = p.outData(out, t.Sel, i)
+	default:
+		return fmt.Errorf("don't support type (%+v)", t)
+	}
+
+	return err
+}
+
+func (p *prop) outObject(out io.Writer, t *ast.StructType, i int) error {
+	out.Write([]byte(sheet.TypeObj))
+	out.Write(lf)
+
+	for _, f := range t.Fields.List {
+		p.outTab(out, i+1)
+		if err := p.outKeyName(out, f.Tag); err != nil {
+			return err
+		}
+		p.outTab4Type(out, i+1)
+		if err := p.outData(out, f.Type, i+1); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *prop) outArray(out io.Writer, t *ast.ArrayType, i int) error {
+	out.Write([]byte(sheet.TypeAry))
+	out.Write(lf)
+
+	for j := 0; j < 2; j++ {
+		p.outTab(out, i+1)
+		out.Write([]byte("*"))
+		p.outTab4Type(out, i+1)
+		err := p.outData(out, t.Elt, i+1)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *prop) outIdent(out io.Writer, t *ast.Ident, i int) error {
+
+	tName := ""
+	switch t.Name {
+	case "string", "StringValue", "Timestamp":
+		tName = sheet.TypeStr
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "UInt32Value", "UInt64Value":
+		tName = sheet.TypeNum
+	case "bool", "BoolValue":
+		tName = sheet.TypeBool
+	default:
+		if t.Obj != nil {
+			if ts, ok := t.Obj.Decl.(*ast.TypeSpec); ok {
+				return p.outData(out, ts.Type, i)
+			} else {
+				panic(fmt.Sprintf("don't expected type (%+v)", t.Obj.Decl))
+			}
+		} else {
+			// if can't search, user modifies output data manually
+			tName = fmt.Sprintf("<%s>", t.Name)
+		}
+	}
+
+	out.Write([]byte(tName))
+	out.Write(lf)
+
+	return nil
+}
+
+func (p *prop) outTab(out io.Writer, i int) {
+	// fmt.Printf("outTab: i=%d\n", i)
+	for j := 0; j < i; j++ {
+		out.Write([]byte("\t"))
+	}
+}
+
+func (p *prop) outTab4Type(out io.Writer, i int) {
+	// fmt.Printf("outTab4Type: i=%d\n", i)
+	p.outTab(out, sheet.PropLevel-i)
+}
+
+func (p *prop) outKeyName(out io.Writer, tag *ast.BasicLit) error {
+
+	if tag == nil {
+		return errors.New("not found json tag")
+	}
+
+	pre := "json:\""
+	s := strings.Index(tag.Value, pre) + len(pre)
+	e := strings.Index(tag.Value[s:], "\"") + s
+	out.Write([]byte(strings.Split(tag.Value[s:e], ",")[0]))
+
 	return nil
 }

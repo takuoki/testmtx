@@ -14,42 +14,93 @@ TBD...
 
 ## Preparation
 
-* credentials.json for Google Sheets API
-* config.json for `testmtx` (TBD)
+* `credentials.json` for [Google Sheets API](https://developers.google.com/sheets/api/quickstart/go#step_1_turn_on_the)
+* `config.json` for `testmtx` (TBD)
 
 ## Usage
 
-### Google Spreadsheets
+### Output Property
 
-image...
+#### Struct File
 
-### Command
+```go
+type Request struct {
+  NumKey    *int    `json:"num_key"`
+  StringKey *string `json:"string_key"`
+  BoolKey   *bool   `json:"bool_key"`
+  ObjectKey struct {
+    Key1 *int    `json:"key1"`
+    Key2 *string `json:"key2"`
+  } `json:"object_key"`
+  ArrayKey []struct {
+    Key3 *int    `json:"key3"`
+    Key4 *string `json:"key4"`
+  } `json:"array_key"`
+}
+```
+
+#### Command: prop
+
+```txt
+./testmtx prop -f sample/sample.go -s Request
+```
+
+#### Output Format
+
+Output to standard output.
+
+```txt
+request             object
+    num_key         numder
+    string_key      string
+    bool_key        bool
+    object_key      object
+        key1        numder
+        key2        string
+    array_key       array
+        *           object
+            key3    numder
+            key4    string
+        *           object
+            key3    numder
+            key4    string
+```
+
+### Output Test Data Files
+
+#### Google Spreadsheets
+
+[Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE)
+
+![Sample Sheet](https://github.com/takuoki/testmtx/blob/image/image/sample_sheet.png)
+
+#### Command: out
 
 ```txt
 ./testmtx out -s {SpreadsheetID}
 ```
 
-### Generated File
+#### Generated File
 
 ./out/request/sheetname_casename.json
 
 ```json
 {
-  "val": 111,
-  "str": "string value 1",
-  "b": true,
-  "obj": {
-    "foo": 222,
-    "bar": "string value 2"
+  "num_key": 101,
+  "string_key": "string value 101",
+  "bool_key": true,
+  "object_key": {
+    "key1": 201,
+    "key2": "string value 201"
   },
-  "ary": [
+  "array_key": [
     {
-      "foo": 333,
-      "bar": "string value 3"
+      "key3": 301,
+      "key4": "string value 301"
     },
     {
-      "foo": 444,
-      "bar": "string value 4"
+      "key3": 401,
+      "key4": "string value 401"
     }
   ]
 }
@@ -59,8 +110,8 @@ image...
 
 ```json
 {
-  "code": "CODE",
-  "message": "MESSAGE"
+  "status": "success",
+  "code": 200
 }
 ```
 

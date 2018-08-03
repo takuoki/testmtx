@@ -6,8 +6,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/takuoki/testmtx/sheet"
 	"github.com/urfave/cli"
+
+	"github.com/takuoki/testmtx/sheet"
 )
 
 func init() {
