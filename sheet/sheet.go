@@ -8,8 +8,8 @@ import (
 )
 
 // Get is ...
-func Get(spreadsheetID string) ([]*Sheet, error) {
-	cli, err := new(spreadsheetID)
+func Get(authFile, spreadsheetID string, exceptSheetSet map[string]struct{}) ([]*Sheet, error) {
+	cli, err := new(authFile, spreadsheetID)
 	if err != nil {
 		return nil, err
 	}
@@ -21,6 +21,9 @@ func Get(spreadsheetID string) ([]*Sheet, error) {
 
 	sheets := []*Sheet{}
 	for _, sn := range sheetNames {
+		if _, ok := exceptSheetSet[sn]; ok {
+			continue
+		}
 		d, err := cli.getSheetData(sn)
 		if err != nil {
 			return nil, err
@@ -67,7 +70,10 @@ func parse(sheetName string, d [][]interface{}) (*Sheet, error) {
 	// properties
 	for ri := rDataStart; ri < len(d); ri++ {
 		if level(d[ri]) == 1 {
-			p := fmt.Sprintf("%s", d[ri][cPropStart])
+			p := strings.Replace(fmt.Sprintf("%s", d[ri][cPropStart]), " ", "_", -1)
+			if _, ok := s.DataMap[p]; ok {
+				return nil, fmt.Errorf("root property name is duplicated (sheet=%s)", sheetName)
+			}
 			var pd Data
 			var err error
 			pd, ri, err = getData(d, ri, 1, s.Cases)

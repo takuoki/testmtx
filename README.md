@@ -19,7 +19,69 @@ TBD...
 
 ## Usage
 
+### Output Test Data Files
+
+Using `out` subcommand, you can generate test data from Google Spreadsheets.
+This tool creates test data for all sheets, and all test cases.
+For each sheet, this tool searches from the beginning of the test case name to the right and end when the test case name becomes blank.
+
+Blank cells mean `null`, so the property itself is not output.
+When you want to output object or array, or empty characters in string, use `*new`,　`*empty` keywords.
+
+#### Google Spreadsheets
+
+[Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE)
+
+![Sample Sheet](https://github.com/takuoki/testmtx/blob/image/image/sample_sheet.png)
+
+#### Command: out
+
+```txt
+./testmtx -c config.json out -s 1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE
+```
+
+`1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE`: sheet ID
+
+#### Generated File
+
+./out/request/sheet_case1.json
+
+```json
+{
+  "num_key": 101,
+  "string_key": "string value 101",
+  "bool_key": true,
+  "object_key": {
+    "key1": 201,
+    "key2": "string value 201"
+  },
+  "array_key": [
+    {
+      "key3": 301,
+      "key4": "string value 301"
+    },
+    {
+      "key3": 401,
+      "key4": "string value 401"
+    }
+  ]
+}
+```
+
+./out/expected/sheet_case1.json
+
+```json
+{
+  "status": "success",
+  "code": 200
+}
+```
+
 ### Output Property
+
+Using `prop` subcommand, you can generate the list of properties for Google Spreadsheets from Go type.
+This is a subsidiary function, and you can modify this output list.
+If the target type refers some other files, you should modify the output type.
 
 #### Struct File
 
@@ -66,61 +128,24 @@ request             object
             key4    string
 ```
 
-### Output Test Data Files
+## Config File
 
-#### Google Spreadsheets
-
-[Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE)
-
-![Sample Sheet](https://github.com/takuoki/testmtx/blob/image/image/sample_sheet.png)
-
-#### Command: out
-
-```txt
-./testmtx out -s {SpreadsheetID}
-```
-
-#### Generated File
-
-./out/request/sheetname_casename.json
+You can use several additional functions with the config file.
+When you want to use these functions, specify config file as command line argument.
 
 ```json
 {
-  "num_key": 101,
-  "string_key": "string value 101",
-  "bool_key": true,
-  "object_key": {
-    "key1": 201,
-    "key2": "string value 201"
-  },
-  "array_key": [
+  "except_sheet_names": [
+    "overview"
+  ],
+  "sheet_alias_list": [
     {
-      "key3": 301,
-      "key4": "string value 301"
-    },
-    {
-      "key3": 401,
-      "key4": "string value 401"
+      "alias": "sample",
+      "sheet_id": "1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE"
     }
   ]
 }
 ```
 
-./out/expected/sheetname_casename.json
-
-```json
-{
-  "status": "success",
-  "code": 200
-}
-```
-
-## How to input sheet
-
-* If object or array type, use `*new` keyword
-* If string type and empty, use `*empty` keyword
-
-## Other Requirements
-
-* create test data until case name become empty
-* empty cell is nil
+* except_sheet_names: The sheets listed here are excluded from output.
+* sheet_alias_list: If you define an alias here, you can specify a sheet with an alias name.

@@ -42,7 +42,7 @@ func init() {
 
 type prop struct{}
 
-func (p *prop) Run(c *cli.Context) error {
+func (p *prop) Run(c *cli.Context, _ *config) error {
 	return p.Main(c.String("file"), c.String("type"))
 }
 
@@ -143,9 +143,8 @@ func (p *prop) outIdent(out io.Writer, t *ast.Ident, i int) error {
 		if t.Obj != nil {
 			if ts, ok := t.Obj.Decl.(*ast.TypeSpec); ok {
 				return p.outData(out, ts.Type, i)
-			} else {
-				panic(fmt.Sprintf("don't expected type (%+v)", t.Obj.Decl))
 			}
+			panic(fmt.Sprintf("don't expected type (%+v)", t.Obj.Decl))
 		} else {
 			// if can't search, user modifies output data manually
 			tName = fmt.Sprintf("<%s>", t.Name)

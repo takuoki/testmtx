@@ -51,7 +51,7 @@ func (f *jsonf) outArray(out io.Writer, d *sheet.DArray, c sheet.Casename, i int
 			if !e.IsNil(c) {
 				out.Write([]byte(fmt.Sprintf("%s", f.indents(i+1))))
 				f.OutData(out, e, c, i+1)
-				if !d.LastEntity(c, j) {
+				if !d.LastElement(c, j) {
 					out.Write([]byte(","))
 				}
 				out.Write([]byte("\n"))

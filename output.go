@@ -20,13 +20,18 @@ func init() {
 		},
 		Flags: []cli.Flag{
 			cli.StringFlag{
+				Name:  "auth, a",
+				Value: "credentials.json",
+				Usage: "credential file for Google Sheets API",
+			},
+			cli.StringFlag{
 				Name:  "sheet, s",
-				Usage: "google spreadsheet id",
+				Usage: "google spreadsheet id (maondatory)",
 			},
 			cli.StringFlag{
 				Name:  "format, f",
 				Value: "json",
-				Usage: "output format",
+				Usage: "output format (json, yaml)",
 			},
 		},
 	})
@@ -39,13 +44,17 @@ type format interface {
 	Extention() string
 }
 
-func (o *output) Run(c *cli.Context) error {
+func (o *output) Run(c *cli.Context, conf *config) error {
 
 	if c.String("sheet") == "" {
 		return errors.New("no google spreadsheet id")
 	}
 
-	ss, err := sheet.Get(c.String("sheet"))
+	sheetID := c.String("sheet")
+	if v, ok := conf.SheetAliasMap[sheetID]; ok {
+		sheetID = v
+	}
+	ss, err := sheet.Get(c.String("auth"), sheetID, conf.ExceptSheetSet)
 	if err != nil {
 		return err
 	}
@@ -54,6 +63,8 @@ func (o *output) Run(c *cli.Context) error {
 	switch c.String("format") {
 	case "json":
 		f = &jsonf{}
+	case "yaml":
+		f = &yamlf{}
 	default:
 		return fmt.Errorf("no such format (%s)", c.String("format"))
 	}
