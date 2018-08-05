@@ -15,7 +15,6 @@ TBD...
 ## Preparation
 
 * `credentials.json` for [Google Sheets API](https://developers.google.com/sheets/api/quickstart/go#step_1_turn_on_the)
-* `config.json` for `testmtx` (TBD)
 
 ## Usage
 
