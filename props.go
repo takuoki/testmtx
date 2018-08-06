@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	lf = []byte("\n")
+	lf        = []byte("\n")
+	importMap = map[string]string{}
 )
 
 func init() {
@@ -43,6 +44,15 @@ func init() {
 type prop struct{}
 
 func (p *prop) Run(c *cli.Context, _ *config) error {
+
+	if c.String("file") == "" {
+		return errors.New("no file name")
+	}
+
+	if c.String("type") == "" {
+		return errors.New("no type name")
+	}
+
 	return p.Main(c.String("file"), c.String("type"))
 }
 
@@ -56,6 +66,11 @@ func (p *prop) Main(file, tName string) error {
 
 	for _, d := range f.Decls {
 		if gd, ok := d.(*ast.GenDecl); ok {
+			for _, s := range gd.Specs {
+				if is, ok := s.(*ast.ImportSpec); ok {
+					importMap[is.Name.Name] = is.Path.Value
+				}
+			}
 			for _, s := range gd.Specs {
 				if ts, ok := s.(*ast.TypeSpec); ok {
 					if ts.Name.Name == tName {
@@ -83,10 +98,10 @@ func (p *prop) outData(out io.Writer, d ast.Expr, i int) error {
 		err = p.outArray(out, t, i)
 	case *ast.Ident:
 		err = p.outIdent(out, t, i)
+	case *ast.SelectorExpr:
+		err = p.outSelectorExpr(out, t, i)
 	case *ast.StarExpr:
 		err = p.outData(out, t.X, i)
-	case *ast.SelectorExpr:
-		err = p.outData(out, t.Sel, i)
 	default:
 		return fmt.Errorf("don't support type (%+v)", t)
 	}
@@ -133,22 +148,56 @@ func (p *prop) outIdent(out io.Writer, t *ast.Ident, i int) error {
 
 	tName := ""
 	switch t.Name {
-	case "string", "StringValue", "Timestamp":
+	case "string", "rune":
 		tName = sheet.TypeStr
-	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "UInt32Value", "UInt64Value":
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "float32", "float64":
 		tName = sheet.TypeNum
-	case "bool", "BoolValue":
+	case "bool":
 		tName = sheet.TypeBool
 	default:
 		if t.Obj != nil {
 			if ts, ok := t.Obj.Decl.(*ast.TypeSpec); ok {
 				return p.outData(out, ts.Type, i)
 			}
-			panic(fmt.Sprintf("don't expected type (%+v)", t.Obj.Decl))
-		} else {
-			// if can't search, user modifies output data manually
-			tName = fmt.Sprintf("<%s>", t.Name)
 		}
+		panic(fmt.Sprintf("don't expected type (%s)", t.Name))
+	}
+
+	out.Write([]byte(tName))
+	out.Write(lf)
+
+	return nil
+}
+
+func (p *prop) outSelectorExpr(out io.Writer, t *ast.SelectorExpr, i int) error {
+
+	var impPath string
+	if x, ok := t.X.(*ast.Ident); ok {
+		if pt, ok := importMap[x.Name]; ok {
+			impPath = pt
+		}
+	}
+
+	tName := ""
+	switch impPath {
+	case "\"github.com/golang/protobuf/ptypes/timestamp\"":
+		if t.Sel.Name == "Timestamp" {
+			tName = sheet.TypeStr
+		}
+	case "\"github.com/golang/protobuf/ptypes/wrappers\"":
+		switch t.Sel.Name {
+		case "StringValue", "BytesValue":
+			tName = sheet.TypeStr
+		case "Int32Value", "Int64Value", "UInt32Value", "UInt64Value", "FloatValue", "DoubleValue":
+			tName = sheet.TypeNum
+		case "BoolValue":
+			tName = sheet.TypeBool
+		}
+	}
+
+	if tName == "" {
+		// if can't search, user modifies output data manually
+		tName = fmt.Sprintf("<%s>", t.Sel.Name)
 	}
 
 	out.Write([]byte(tName))
