@@ -82,7 +82,7 @@ Using `prop` subcommand, you can generate the list of properties for Google Spre
 This is a subsidiary function, and you can modify this output list.
 If the target type refers some other files, you should modify the output type.
 
-#### Struct File
+#### Golang File
 
 ```go
 type Request struct {

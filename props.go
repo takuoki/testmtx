@@ -207,14 +207,12 @@ func (p *prop) outSelectorExpr(out io.Writer, t *ast.SelectorExpr, i int) error 
 }
 
 func (p *prop) outTab(out io.Writer, i int) {
-	// fmt.Printf("outTab: i=%d\n", i)
 	for j := 0; j < i; j++ {
 		out.Write([]byte("\t"))
 	}
 }
 
 func (p *prop) outTab4Type(out io.Writer, i int) {
-	// fmt.Printf("outTab4Type: i=%d\n", i)
 	p.outTab(out, sheet.PropLevel-i)
 }
 

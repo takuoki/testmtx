@@ -10,7 +10,7 @@ import (
 type yamlf struct{}
 
 func (f *yamlf) OutData(out io.Writer, d sheet.Data, c sheet.Casename, i int) error {
-	return f.OutData2(out, d, c, i, true)
+	return f.OutData2(out, d, c, i, false)
 }
 
 func (f *yamlf) OutData2(out io.Writer, d sheet.Data, c sheet.Casename, i int, br bool) error {
@@ -31,19 +31,19 @@ func (f *yamlf) OutData2(out io.Writer, d sheet.Data, c sheet.Casename, i int, b
 	return nil
 }
 
-func (f *yamlf) outObject(out io.Writer, d *sheet.DObject, c sheet.Casename, i int, fromAry bool) {
+func (f *yamlf) outObject(out io.Writer, d *sheet.DObject, c sheet.Casename, i int, br bool) {
 	if !d.IsNil(c) {
-		if !fromAry {
+		if br {
 			out.Write([]byte("\n"))
 		}
 		for _, pn := range d.PropertyNames {
 			if !d.Properties[pn].IsNil(c) {
 				idt := ""
-				if !fromAry || !d.FirstProperty(c, pn) {
+				if br || !d.FirstProperty(c, pn) {
 					idt = f.indents(i + 1)
 				}
 				out.Write([]byte(fmt.Sprintf("%s%s: ", idt, pn)))
-				f.OutData2(out, d.Properties[pn], c, i+1, false)
+				f.OutData2(out, d.Properties[pn], c, i+1, true)
 				if !d.LastProperty(c, pn) {
 					out.Write([]byte("\n"))
 				}
@@ -52,19 +52,19 @@ func (f *yamlf) outObject(out io.Writer, d *sheet.DObject, c sheet.Casename, i i
 	}
 }
 
-func (f *yamlf) outArray(out io.Writer, d *sheet.DArray, c sheet.Casename, i int, fromAry bool) {
+func (f *yamlf) outArray(out io.Writer, d *sheet.DArray, c sheet.Casename, i int, br bool) {
 	if !d.IsNil(c) {
-		if !fromAry {
+		if br {
 			out.Write([]byte("\n"))
 		}
 		for j, e := range d.Elements {
 			if !e.IsNil(c) {
 				idt := ""
-				if !fromAry || !d.FirstElement(c, j) {
+				if br || !d.FirstElement(c, j) {
 					idt = f.indents(i + 1)
 				}
 				out.Write([]byte(fmt.Sprintf("%s- ", idt)))
-				f.OutData2(out, e, c, i+1, true)
+				f.OutData2(out, e, c, i+1, false)
 				if !d.LastElement(c, j) {
 					out.Write([]byte("\n"))
 				}
