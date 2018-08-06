@@ -33,6 +33,11 @@ func init() {
 				Value: "json",
 				Usage: "output format (json, yaml)",
 			},
+			cli.StringFlag{
+				Name:  "out, o",
+				Value: "out",
+				Usage: "output directory",
+			},
 		},
 	})
 }
@@ -69,14 +74,14 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 		return fmt.Errorf("no such format (%s)", c.String("format"))
 	}
 
-	return o.Main(ss, f)
+	return o.Main(ss, f, c.String("out"))
 }
 
-func (o *output) Main(ss []*sheet.Sheet, f format) error {
+func (o *output) Main(ss []*sheet.Sheet, f format, outDir string) error {
 
 	for _, s := range ss {
 		for k, v := range s.DataMap {
-			dir := fmt.Sprintf("out/%s", k)
+			dir := fmt.Sprintf("%s/%s", outDir, k)
 			if err := os.MkdirAll(dir, 0777); err != nil {
 				return err
 			}
