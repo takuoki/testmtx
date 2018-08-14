@@ -40,11 +40,11 @@ func init() {
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "file, f",
-				Usage: "golang file witch target struct is written",
+				Usage: "golang file in which the target type is defined (maondatory)",
 			},
 			cli.StringFlag{
 				Name:  "type, t",
-				Usage: "target type name",
+				Usage: "target type name (maondatory)",
 			},
 		},
 	})
