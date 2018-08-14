@@ -74,7 +74,13 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 		return fmt.Errorf("no such format (%s)", c.String("format"))
 	}
 
-	return o.Main(ss, f, c.String("out"))
+	if err := o.Main(ss, f, c.String("out")); err != nil {
+		return err
+	}
+
+	fmt.Println("output completed successfully!")
+
+	return nil
 }
 
 func (o *output) Main(ss []*sheet.Sheet, f format, outDir string) error {

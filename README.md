@@ -8,13 +8,26 @@
 If you create test case as matrix on Google Spreadsheets, this tool generates some test data like JSON file based on the data you input.
 Using `testmtx`, you can get advantages of **completeness**, **readability** and **consistency**.
 
-## Install
+## Installation
 
-TBD...
+To install `testmtx`, please use `go get`.
+You must have Go 1.9 or greater installed, and `$GOPATH/bin` added to your PATH.
+
+```txt
+$ go get github.com/takuoki/testmtx
+...
+$ testmtx -h
+...
+```
 
 ## Preparation
 
 * `credentials.json` for [Google Sheets API](https://developers.google.com/sheets/api/quickstart/go#step_1_turn_on_the)
+
+  1. Create new GCP Project on [GCP Console](https://console.cloud.google.com)
+  1. Enable Google Sheets API on [APIs & Services] - [API Library]
+  1. Setting OAuth consent screen and create OAuth client ID on [APIs & Services] - [Credentials]
+  1. Download JSON file and rename it to `credentials.json`
 
 ## Usage
 
@@ -36,10 +49,11 @@ When you want to output object or array, or empty characters in string, use `*ne
 #### Command: out
 
 ```txt
-./testmtx -c config.json out -s 1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE
+$ testmtx -c config.json out -s sample
+output completed successfully!
 ```
 
-`1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE`: sheet ID
+sample : sheet ID alias for `1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE` (see [Config File](#config-file))
 
 #### Generated File
 
@@ -103,14 +117,7 @@ type Request struct {
 #### Command: prop
 
 ```txt
-./testmtx prop -f sample/sample.go -s Request
-```
-
-#### Output Format
-
-Output to standard output.
-
-```txt
+$ testmtx prop -f sample/sample.go -t Request
 request             object
     num_key         numder
     string_key      string
@@ -125,6 +132,8 @@ request             object
         *           object
             key3    numder
             key4    string
+
+output completed successfully!
 ```
 
 ## Config File

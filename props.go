@@ -62,7 +62,13 @@ func (p *prop) Run(c *cli.Context, _ *config) error {
 		return errors.New("no type name")
 	}
 
-	return p.Main(c.String("file"), c.String("type"))
+	if err := p.Main(c.String("file"), c.String("type")); err != nil {
+		return err
+	}
+
+	fmt.Println("\noutput completed successfully!")
+
+	return nil
 }
 
 func (p *prop) Main(file, tName string) error {
