@@ -26,7 +26,7 @@ func init() {
 			},
 			cli.StringFlag{
 				Name:  "sheet, s",
-				Usage: "google spreadsheet id (maondatory)",
+				Usage: "google spreadsheet id (mandatory)",
 			},
 			cli.StringFlag{
 				Name:  "format, f",
@@ -37,6 +37,11 @@ func init() {
 				Name:  "out, o",
 				Value: "out",
 				Usage: "output directory",
+			},
+			cli.IntFlag{
+				Name:  "proplevel, pl",
+				Value: 10,
+				Usage: "properties level (if you extend properties columns, mandatory)",
 			},
 		},
 	})
@@ -73,6 +78,8 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 	default:
 		return fmt.Errorf("no such format (%s)", c.String("format"))
 	}
+
+	sheet.SetPropLevel(c.Int("proplevel"))
 
 	if err := o.Main(ss, f, c.String("out")); err != nil {
 		return err

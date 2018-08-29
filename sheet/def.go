@@ -1,5 +1,7 @@
 package sheet
 
+import "errors"
+
 const (
 	// TypeObj is ...
 	TypeObj = "object"
@@ -24,12 +26,27 @@ const (
 
 	rDataStart = 3
 	cPropStart = 1  // B
-	cPropEnd   = 10 // K
 	cType      = 11 // L
-
-	// PropLevel is ..
-	PropLevel = cPropEnd - cPropStart + 1
 )
+
+var (
+	cPropEnd = 10 // K (default)
+)
+
+// SetPropLevel is ...
+func SetPropLevel(level int) error {
+	if level < 1 {
+		return errors.New("SetPropLevel: level should be positive value")
+	}
+
+	cPropEnd = level + cPropStart - 1
+	return nil
+}
+
+// GetPropLevel is ...
+func GetPropLevel() int {
+	return cPropEnd - cPropStart + 1
+}
 
 // Sheet is ...
 type Sheet struct {
