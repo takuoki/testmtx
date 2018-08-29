@@ -40,11 +40,16 @@ func init() {
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "file, f",
-				Usage: "golang file in which the target type is defined (maondatory)",
+				Usage: "golang file in which the target type is defined (mandatory)",
 			},
 			cli.StringFlag{
 				Name:  "type, t",
-				Usage: "target type name (maondatory)",
+				Usage: "target type name (mandatory)",
+			},
+			cli.IntFlag{
+				Name:  "proplevel, pl",
+				Value: 10,
+				Usage: "properties level (if you extend properties columns, mandatory)",
 			},
 		},
 	})
@@ -61,6 +66,8 @@ func (p *prop) Run(c *cli.Context, _ *config) error {
 	if c.String("type") == "" {
 		return errors.New("no type name")
 	}
+
+	sheet.SetPropLevel(c.Int("proplevel"))
 
 	if err := p.Main(c.String("file"), c.String("type")); err != nil {
 		return err
@@ -132,6 +139,10 @@ func (p *prop) Main(file, tName string) error {
 }
 
 func (p *prop) outData(out io.Writer, d ast.Expr, i int) error {
+
+	if i >= sheet.GetPropLevel() {
+		return fmt.Errorf("the type hierarchy exceeds the properties level. specify option '-proplevel' and re-execute")
+	}
 
 	var err error
 
@@ -261,7 +272,7 @@ func (p *prop) outTab(out io.Writer, i int) {
 }
 
 func (p *prop) outTab4Type(out io.Writer, i int) {
-	p.outTab(out, sheet.PropLevel-i)
+	p.outTab(out, sheet.GetPropLevel()-i)
 }
 
 func (p *prop) outKeyName(out io.Writer, tag *ast.BasicLit) error {
