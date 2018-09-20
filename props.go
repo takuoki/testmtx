@@ -20,6 +20,8 @@ var (
 	lf              = []byte("\n")
 	importMap       = map[string]string{}
 	enumPropertyMap = map[string]*enumProperty{}
+
+	repeated = 2 // overwritten by option
 )
 
 type enumProperty struct {
@@ -51,6 +53,11 @@ func init() {
 				Value: 10,
 				Usage: "properties level (if you extend properties columns, mandatory)",
 			},
+			cli.IntFlag{
+				Name:  "repeated, r",
+				Value: 2,
+				Usage: "repeated count of array elements",
+			},
 		},
 	})
 }
@@ -68,6 +75,8 @@ func (p *prop) Run(c *cli.Context, _ *config) error {
 	}
 
 	sheet.SetPropLevel(c.Int("proplevel"))
+
+	repeated = c.Int("repeated")
 
 	if err := p.Main(c.String("file"), c.String("type")); err != nil {
 		return err
@@ -186,7 +195,7 @@ func (p *prop) outArray(out io.Writer, t *ast.ArrayType, i int) error {
 	out.Write([]byte(sheet.TypeAry))
 	out.Write(lf)
 
-	for j := 0; j < 2; j++ {
+	for j := 0; j < repeated; j++ {
 		p.outTab(out, i+1)
 		out.Write([]byte("*"))
 		p.outTab4Type(out, i+1)
