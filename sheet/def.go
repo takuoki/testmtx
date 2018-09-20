@@ -22,16 +22,16 @@ const (
 	strNew   = "*new"
 	strEmpty = "*empty"
 
-	rCase      = 2
-	cCaseStart = 12 // M
+	rCase = 2
 
 	rDataStart = 3
-	cPropStart = 1  // B
-	cType      = 11 // L
+	cPropStart = 1 // B
 )
 
 var (
-	cPropEnd = 10 // K (default)
+	cPropEnd   = 10 // K (default)
+	cType      = 11 // L (default)
+	cCaseStart = 12 // M (default)
 )
 
 // SetPropLevel is ...
@@ -41,6 +41,8 @@ func SetPropLevel(level int) error {
 	}
 
 	cPropEnd = level + cPropStart - 1
+	cType = cPropEnd + 1
+	cCaseStart = cType + 1
 	return nil
 }
 
