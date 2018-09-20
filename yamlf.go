@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/takuoki/testmtx/sheet"
 )
@@ -75,7 +76,7 @@ func (f *yamlf) outArray(out io.Writer, d *sheet.DArray, c sheet.Casename, i int
 
 func (f *yamlf) outString(out io.Writer, d *sheet.DString, c sheet.Casename) {
 	if !d.IsNil(c) {
-		out.Write([]byte(fmt.Sprintf("%s", *d.Values[c])))
+		out.Write([]byte(fmt.Sprintf("%s", f.escapeString(*d.Values[c]))))
 	}
 }
 
@@ -97,6 +98,11 @@ func (f *yamlf) indents(i int) string {
 	for j := 0; j < i-1; j++ {
 		str += indent
 	}
+	return str
+}
+
+func (f *yamlf) escapeString(str string) string {
+	str = strings.Replace(str, "\n", "\\n", -1)
 	return str
 }
 
