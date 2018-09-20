@@ -18,6 +18,7 @@ const (
 	// TypeBool is ...
 	TypeBool = "bool"
 
+	strNull  = "*null"
 	strNew   = "*new"
 	strEmpty = "*empty"
 

@@ -38,7 +38,8 @@ This tool creates test data for all sheets, and all test cases.
 For each sheet, this tool searches from the beginning of the test case name to the right and end when the test case name becomes blank.
 
 Blank cells mean `null`, so the property itself is not output.
-When you want to output object or array, or empty characters in string, use `*new`,　`*empty` keywords.
+If you want to specify it is `null` clearly, you can also use `*null` keyword.
+When you want to output object or array, or empty string, use `*new`,　`*empty` keywords.
 
 #### Google Spreadsheets
 
