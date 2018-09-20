@@ -127,10 +127,10 @@ request             object
         key1        numder
         key2        string
     array_key       array
-        *           object
+        * 0         object
             key3    numder
             key4    string
-        *           object
+        * 1         object
             key3    numder
             key4    string
 

@@ -197,7 +197,7 @@ func (p *prop) outArray(out io.Writer, t *ast.ArrayType, i int) error {
 
 	for j := 0; j < repeated; j++ {
 		p.outTab(out, i+1)
-		out.Write([]byte("*"))
+		out.Write([]byte(fmt.Sprintf("* %d", j)))
 		p.outTab4Type(out, i+1)
 		err := p.outData(out, t.Elt, i+1)
 		if err != nil {
