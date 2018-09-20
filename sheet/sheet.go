@@ -195,7 +195,7 @@ func getObjAryValues(rowData []interface{}, cases []Casename) (map[Casename]bool
 		}
 		str := fmt.Sprintf("%s", rowData[ci])
 		switch str {
-		case "":
+		case strNull, "":
 			m[cases[i]] = false
 		case strNew:
 			m[cases[i]] = true
@@ -224,7 +224,7 @@ func getStringValues(rowData []interface{}, cases []Casename) (map[Casename]*str
 		}
 		str := fmt.Sprintf("%s", rowData[ci])
 		switch str {
-		case "":
+		case strNull, "":
 			m[cases[i]] = nil
 		case strEmpty:
 			es := ""
@@ -254,7 +254,7 @@ func getNumValues(rowData []interface{}, cases []Casename) (map[Casename]*string
 		}
 		str := fmt.Sprintf("%s", rowData[ci])
 		switch str {
-		case "":
+		case strNull, "":
 			m[cases[i]] = nil
 		default:
 			_, err := strconv.ParseFloat(str, 64)
@@ -285,7 +285,7 @@ func getBoolValues(rowData []interface{}, cases []Casename) (map[Casename]*bool,
 		}
 		str := fmt.Sprintf("%s", rowData[ci])
 		switch str {
-		case "":
+		case strNull, "":
 			m[cases[i]] = nil
 		case "true", "TRUE", "True":
 			t := true
