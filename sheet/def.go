@@ -1,5 +1,7 @@
 package sheet
 
+import "errors"
+
 const (
 	// TypeObj is ...
 	TypeObj = "object"
@@ -16,6 +18,7 @@ const (
 	// TypeBool is ...
 	TypeBool = "bool"
 
+	strNull  = "*null"
 	strNew   = "*new"
 	strEmpty = "*empty"
 
@@ -24,12 +27,27 @@ const (
 
 	rDataStart = 3
 	cPropStart = 1  // B
-	cPropEnd   = 10 // K
 	cType      = 11 // L
-
-	// PropLevel is ..
-	PropLevel = cPropEnd - cPropStart + 1
 )
+
+var (
+	cPropEnd = 10 // K (default)
+)
+
+// SetPropLevel is ...
+func SetPropLevel(level int) error {
+	if level < 1 {
+		return errors.New("SetPropLevel: level should be positive value")
+	}
+
+	cPropEnd = level + cPropStart - 1
+	return nil
+}
+
+// GetPropLevel is ...
+func GetPropLevel() int {
+	return cPropEnd - cPropStart + 1
+}
 
 // Sheet is ...
 type Sheet struct {
@@ -56,6 +74,19 @@ type DObject struct {
 // IsNil is ...
 func (d *DObject) IsNil(c Casename) bool {
 	return !d.Values[c]
+}
+
+// FirstProperty is ...
+func (d *DObject) FirstProperty(c Casename, propName string) bool {
+	for _, pn := range d.PropertyNames {
+		if pn == propName {
+			return true
+		}
+		if !d.Properties[pn].IsNil(c) {
+			return false
+		}
+	}
+	return false
 }
 
 // LastProperty is ...
@@ -88,16 +119,27 @@ func (d *DArray) IsNil(c Casename) bool {
 	return !d.Values[c]
 }
 
-// LastEntity is ...
-func (d *DArray) LastEntity(c Casename, i int) bool {
-	last := true
-	for i = i + 1; i < len(d.Elements); i++ {
-		if !d.Elements[i].IsNil(c) {
-			last = false
-			break
+// FirstElement is ...
+func (d *DArray) FirstElement(c Casename, i int) bool {
+	if i > len(d.Elements) {
+		return false
+	}
+	for j := 0; j < i; j++ {
+		if !d.Elements[j].IsNil(c) {
+			return false
 		}
 	}
-	return last
+	return true
+}
+
+// LastElement is ...
+func (d *DArray) LastElement(c Casename, i int) bool {
+	for i = i + 1; i < len(d.Elements); i++ {
+		if !d.Elements[i].IsNil(c) {
+			return false
+		}
+	}
+	return true
 }
 
 // DString is ...

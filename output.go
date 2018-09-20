@@ -20,13 +20,28 @@ func init() {
 		},
 		Flags: []cli.Flag{
 			cli.StringFlag{
+				Name:  "auth, a",
+				Value: "credentials.json",
+				Usage: "credential file for Google Sheets API",
+			},
+			cli.StringFlag{
 				Name:  "sheet, s",
-				Usage: "google spreadsheet id",
+				Usage: "google spreadsheet id (mandatory)",
 			},
 			cli.StringFlag{
 				Name:  "format, f",
 				Value: "json",
-				Usage: "output format",
+				Usage: "output format (json, yaml)",
+			},
+			cli.StringFlag{
+				Name:  "out, o",
+				Value: "out",
+				Usage: "output directory",
+			},
+			cli.IntFlag{
+				Name:  "proplevel, pl",
+				Value: 10,
+				Usage: "properties level (if you extend properties columns, mandatory)",
 			},
 		},
 	})
@@ -39,13 +54,17 @@ type format interface {
 	Extention() string
 }
 
-func (o *output) Run(c *cli.Context) error {
+func (o *output) Run(c *cli.Context, conf *config) error {
 
 	if c.String("sheet") == "" {
 		return errors.New("no google spreadsheet id")
 	}
 
-	ss, err := sheet.Get(c.String("sheet"))
+	sheetID := c.String("sheet")
+	if v, ok := conf.SheetAliasMap[sheetID]; ok {
+		sheetID = v
+	}
+	ss, err := sheet.Get(c.String("auth"), sheetID, conf.ExceptSheetSet)
 	if err != nil {
 		return err
 	}
@@ -54,18 +73,28 @@ func (o *output) Run(c *cli.Context) error {
 	switch c.String("format") {
 	case "json":
 		f = &jsonf{}
+	case "yaml":
+		f = &yamlf{}
 	default:
 		return fmt.Errorf("no such format (%s)", c.String("format"))
 	}
 
-	return o.Main(ss, f)
+	sheet.SetPropLevel(c.Int("proplevel"))
+
+	if err := o.Main(ss, f, c.String("out")); err != nil {
+		return err
+	}
+
+	fmt.Println("output completed successfully!")
+
+	return nil
 }
 
-func (o *output) Main(ss []*sheet.Sheet, f format) error {
+func (o *output) Main(ss []*sheet.Sheet, f format, outDir string) error {
 
 	for _, s := range ss {
 		for k, v := range s.DataMap {
-			dir := fmt.Sprintf("out/%s", k)
+			dir := fmt.Sprintf("%s/%s", outDir, k)
 			if err := os.MkdirAll(dir, 0777); err != nil {
 				return err
 			}

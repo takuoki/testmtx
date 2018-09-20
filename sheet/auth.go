@@ -14,9 +14,9 @@ import (
 	sheets "google.golang.org/api/sheets/v4"
 )
 
-func auth() (*sheets.Service, error) {
+func auth(authFile string) (*sheets.Service, error) {
 
-	b, err := ioutil.ReadFile("credentials.json")
+	b, err := ioutil.ReadFile(authFile)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to read client secret file: %v", err)
 	}

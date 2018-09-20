@@ -14,7 +14,7 @@ const (
 var subCmdList = []cli.Command{}
 
 type subCmd interface {
-	Run(*cli.Context) error
+	Run(*cli.Context, *config) error
 }
 
 func main() {
@@ -24,9 +24,12 @@ func main() {
 	app.Version = version
 	app.Usage = "This tool is a test data generator using Google Spreadsheets."
 	app.Commands = subCmdList
-
-	// TODO: -auth
-	// TODO: -config
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "config file for testmtx",
+		},
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		fmt.Println(err.Error())
@@ -35,5 +38,15 @@ func main() {
 }
 
 func action(c *cli.Context, sc subCmd) error {
-	return sc.Run(c)
+
+	conf := &config{}
+	if c.GlobalString("config") != "" {
+		var err error
+		conf, err = readConfig(c.GlobalString("config"))
+		if err != nil {
+			return err
+		}
+	}
+
+	return sc.Run(c, conf)
 }

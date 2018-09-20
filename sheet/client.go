@@ -13,8 +13,8 @@ type client struct {
 	service *sheets.SpreadsheetsService
 }
 
-func new(spreadsheetID string) (*client, error) {
-	srv, err := auth()
+func new(authFile, spreadsheetID string) (*client, error) {
+	srv, err := auth(authFile)
 	if err != nil {
 		return nil, err
 	}
