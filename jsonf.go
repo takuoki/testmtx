@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/takuoki/testmtx/sheet"
 )
@@ -63,7 +64,7 @@ func (f *jsonf) outArray(out io.Writer, d *sheet.DArray, c sheet.Casename, i int
 
 func (f *jsonf) outString(out io.Writer, d *sheet.DString, c sheet.Casename) {
 	if !d.IsNil(c) {
-		out.Write([]byte(fmt.Sprintf("\"%s\"", *d.Values[c])))
+		out.Write([]byte(fmt.Sprintf("\"%s\"", f.escapeString(*d.Values[c]))))
 	}
 }
 
@@ -85,6 +86,11 @@ func (f *jsonf) indents(i int) string {
 	for j := 0; j < i; j++ {
 		str += indent
 	}
+	return str
+}
+
+func (f *jsonf) escapeString(str string) string {
+	str = strings.Replace(str, "\n", "\\n", -1)
 	return str
 }
 
