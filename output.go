@@ -56,6 +56,8 @@ type format interface {
 
 func (o *output) Run(c *cli.Context, conf *config) error {
 
+	sheet.SetPropLevel(c.Int("proplevel"))
+
 	if c.String("sheet") == "" {
 		return errors.New("no google spreadsheet id")
 	}
@@ -78,8 +80,6 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 	default:
 		return fmt.Errorf("no such format (%s)", c.String("format"))
 	}
-
-	sheet.SetPropLevel(c.Int("proplevel"))
 
 	if err := o.Main(ss, f, c.String("out")); err != nil {
 		return err
