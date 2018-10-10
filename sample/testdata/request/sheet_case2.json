@@ -1,5 +1,5 @@
 {
-  "int_key": 102,
+  "num_key": 102,
   "string_key": "string value 201",
   "object_key": {
     "key1": 202,
