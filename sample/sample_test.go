@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/takuoki/gostr"
 )
 
 func TestSample(t *testing.T) {
@@ -47,7 +49,8 @@ func TestSample(t *testing.T) {
 		r := Sample(req)
 
 		if !reflect.DeepEqual(r, exp) {
-			t.Errorf("result is not match (file=%s, expected=%v, actual=%v)", fi.Name(), exp, r)
+			t.Errorf("result is not match (file=%s, expected=%s, actual=%s)",
+				fi.Name(), gostr.Stringify(exp), gostr.Stringify(r))
 		}
 	}
 }

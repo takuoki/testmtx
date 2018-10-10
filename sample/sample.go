@@ -23,19 +23,27 @@ type Expected struct {
 
 // Sample is ...
 func Sample(req *Request) *Expected {
-	e := &Expected{}
-	switch *req.NumKey {
-	case 101:
-		*e.Status = "success"
-		*e.Code = 200
-	case 102:
-		*e.Status = "failure"
-		*e.Code = 401
-	case 103:
-		*e.Status = "failure"
-		*e.Code = 404
-	default:
-		panic("unexpected number")
+
+	var status string
+	var code int
+	if req != nil && req.NumKey != nil {
+		switch *req.NumKey {
+		case 101:
+			status = "success"
+			code = 200
+		case 102:
+			status = "failure"
+			code = 401
+		case 103:
+			status = "failure"
+			code = 404
+		default:
+			panic("unexpected number")
+		}
 	}
-	return e
+
+	return &Expected{
+		Status: &status,
+		Code:   &code,
+	}
 }
