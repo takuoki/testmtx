@@ -7,7 +7,35 @@ import (
 )
 
 // JSONFormatter is ... TODO
-type JSONFormatter struct{}
+type JSONFormatter struct {
+	formatter
+}
+
+// NewJSONFormatter creates a new JSONFormatter.
+// You can change some parameters of the JSONFormatter with JSONFormatOption.
+func NewJSONFormatter(options ...JSONFormatOption) (*JSONFormatter, error) {
+	f := JSONFormatter{
+		formatter{indentStr: "  "},
+	}
+	for _, opt := range options {
+		err := opt(&f)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &f, nil
+}
+
+// JSONFormatOption changes some parameters of the JSONFormatter.
+type JSONFormatOption func(*JSONFormatter) error
+
+// JSONIndentStr changes the indent string in JSON file.
+func JSONIndentStr(s string) JSONFormatOption {
+	return func(f *JSONFormatter) error {
+		f.setIndentStr(s)
+		return nil
+	}
+}
 
 func (f *JSONFormatter) fprint(w io.Writer, v value, cn casename, indent int) {
 	switch val := v.(type) {
@@ -29,7 +57,7 @@ func (f *JSONFormatter) fprintObject(w io.Writer, v *vObject, cn casename, inden
 		fmt.Fprintln(w, "{")
 		for _, pn := range v.propertyNames {
 			if !v.properties[pn].isNil(cn) {
-				fmt.Fprintf(w, "%s\"%s\": ", indents(indent+1), pn)
+				fmt.Fprintf(w, "%s\"%s\": ", f.indents(indent+1), pn)
 				f.fprint(w, v.properties[pn], cn, indent+1)
 				if !v.lastProperty(cn, pn) {
 					fmt.Fprintln(w, ",")
@@ -38,7 +66,7 @@ func (f *JSONFormatter) fprintObject(w io.Writer, v *vObject, cn casename, inden
 				}
 			}
 		}
-		fmt.Fprintf(w, "%s}", indents(indent))
+		fmt.Fprintf(w, "%s}", f.indents(indent))
 	}
 }
 
@@ -47,7 +75,7 @@ func (f *JSONFormatter) fprintArray(w io.Writer, v *vArray, cn casename, indent 
 		fmt.Fprintln(w, "[")
 		for j, e := range v.elements {
 			if !e.isNil(cn) {
-				fmt.Fprintf(w, "%s", indents(indent+1))
+				fmt.Fprintf(w, "%s", f.indents(indent+1))
 				f.fprint(w, e, cn, indent+1)
 				if !v.lastElement(cn, j) {
 					fmt.Fprintln(w, ",")
@@ -56,7 +84,7 @@ func (f *JSONFormatter) fprintArray(w io.Writer, v *vArray, cn casename, indent 
 				}
 			}
 		}
-		fmt.Fprintf(w, "%s]", indents(indent))
+		fmt.Fprintf(w, "%s]", f.indents(indent))
 	}
 }
 

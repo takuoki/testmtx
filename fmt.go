@@ -22,6 +22,24 @@ type Formatter interface {
 	extension() string
 }
 
+type formatter struct {
+	indentStr string
+}
+
+func (f *formatter) setIndentStr(s string) {
+	if f == nil {
+		return
+	}
+	f.indentStr = s
+}
+
+func (f *formatter) indents(i int) string {
+	if f == nil {
+		return ""
+	}
+	return strings.Repeat(f.indentStr, i)
+}
+
 // Output outputs files using Formatter.
 func Output(f Formatter, s *Sheet, outdir string) error {
 
@@ -53,8 +71,4 @@ func output(f Formatter, filepath string, v value, cn casename) error {
 	defer file.Close()
 	f.fprint(file, v, cn, 0)
 	return nil
-}
-
-func indents(i int) string {
-	return strings.Repeat("  ", i)
 }

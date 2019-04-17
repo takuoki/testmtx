@@ -42,6 +42,11 @@ func init() {
 				Value: 10,
 				Usage: "properties level (if you extend properties columns, mandatory)",
 			},
+			cli.StringFlag{
+				Name:  "indent, i",
+				Value: "  ",
+				Usage: "indent string",
+			},
 		},
 	})
 }
@@ -62,7 +67,10 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 	var f testmtx.Formatter
 	switch c.String("format") {
 	case "json":
-		f = &testmtx.JSONFormatter{}
+		f, err = testmtx.NewJSONFormatter(testmtx.JSONIndentStr(c.String("indent")))
+		if err != nil {
+			return err
+		}
 	// case "yaml":
 	// 	f = &yamlf{}
 	default:
