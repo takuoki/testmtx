@@ -23,23 +23,21 @@ type Formatter interface {
 }
 
 // Output outputs files using Formatter.
-func Output(f Formatter, ss []*Sheet, outdir string) error {
+func Output(f Formatter, s *Sheet, outdir string) error {
 
-	if ss == nil {
-		return errors.New("Sheet array is nil")
+	if s == nil {
+		return errors.New("Sheet is nil")
 	}
 
-	for _, s := range ss {
-		for k, v := range s.valueMap {
-			dir := fmt.Sprintf("%s/%s", outdir, k)
-			if err := os.MkdirAll(dir, 0777); err != nil {
-				return fmt.Errorf("Unable to make directory: %v", err)
-			}
-			for _, cn := range s.cases {
-				filepath := fmt.Sprintf("%s/%s_%s.%s", dir, s.name, cn, f.extension())
-				if err := output(f, filepath, v, cn); err != nil {
-					return err
-				}
+	for k, v := range s.valueMap {
+		dir := fmt.Sprintf("%s/%s", outdir, k)
+		if err := os.MkdirAll(dir, 0777); err != nil {
+			return fmt.Errorf("Unable to make directory: %v", err)
+		}
+		for _, cn := range s.cases {
+			filepath := fmt.Sprintf("%s/%s_%s.%s", dir, s.name, cn, f.extension())
+			if err := output(f, filepath, v, cn); err != nil {
+				return err
 			}
 		}
 	}

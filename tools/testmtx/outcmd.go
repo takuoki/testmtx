@@ -1,14 +1,13 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 
+	"github.com/takuoki/gsheets"
+	"github.com/takuoki/testmtx"
 	"github.com/urfave/cli"
-
-	"github.com/takuoki/testmtx/sheet"
 )
 
 func init() {
@@ -49,73 +48,63 @@ func init() {
 
 type output struct{}
 
-type format interface {
-	OutData(io.Writer, sheet.Data, sheet.Casename, int) error
-	Extention() string
-}
-
 func (o *output) Run(c *cli.Context, conf *config) error {
-
-	sheet.SetPropLevel(c.Int("proplevel"))
 
 	if c.String("sheet") == "" {
 		return errors.New("no google spreadsheet id")
+	}
+
+	p, err := testmtx.NewParser(testmtx.PropLevel(c.Int("proplevel")))
+	if err != nil {
+		return err
+	}
+
+	var f testmtx.Formatter
+	switch c.String("format") {
+	case "json":
+		f = &testmtx.JSONFormatter{}
+	// case "yaml":
+	// 	f = &yamlf{}
+	default:
+		return fmt.Errorf("no such format (%s)", c.String("format"))
+	}
+
+	ctx := context.Background()
+	ctx = gsheets.WithCache(ctx)
+	client, err := gsheets.NewForCLI(ctx, c.String("auth"))
+	if err != nil {
+		return err
 	}
 
 	sheetID := c.String("sheet")
 	if v, ok := conf.SheetAliasMap[sheetID]; ok {
 		sheetID = v
 	}
-	ss, err := sheet.Get(c.String("auth"), sheetID, conf.ExceptSheetSet)
+
+	sheetNames, err := client.GetSheetNames(ctx, sheetID)
 	if err != nil {
 		return err
 	}
 
-	var f format
-	switch c.String("format") {
-	case "json":
-		f = &jsonf{}
-	case "yaml":
-		f = &yamlf{}
-	default:
-		return fmt.Errorf("no such format (%s)", c.String("format"))
-	}
-
-	if err := o.Main(ss, f, c.String("out")); err != nil {
-		return err
+	for _, sheetName := range sheetNames {
+		if _, ok := conf.ExceptSheetSet[sheetName]; ok {
+			continue
+		}
+		s, err := client.GetSheet(ctx, sheetID, sheetName)
+		if err != nil {
+			return err
+		}
+		sh, err := p.Parse(s, sheetName)
+		if err != nil {
+			return err
+		}
+		err = testmtx.Output(f, sh, c.String("out"))
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Println("output completed successfully!")
 
 	return nil
-}
-
-func (o *output) Main(ss []*sheet.Sheet, f format, outDir string) error {
-
-	for _, s := range ss {
-		for k, v := range s.DataMap {
-			dir := fmt.Sprintf("%s/%s", outDir, k)
-			if err := os.MkdirAll(dir, 0777); err != nil {
-				return err
-			}
-			for _, c := range s.Cases {
-				err := o.outCase(f, s.Name, dir, c, v)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func (o *output) outCase(f format, sheetName, dirName string, caseName sheet.Casename, d sheet.Data) error {
-	file, err := os.Create(fmt.Sprintf(`./%s/%s_%s.%s`, dirName, sheetName, caseName, f.Extention()))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	return f.OutData(file, d, caseName, 0)
 }

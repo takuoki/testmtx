@@ -45,7 +45,7 @@ func (v *vObject) lastProperty(cn casename, pn propname) bool {
 			continue
 		}
 		if check {
-			if !v.properties[pn].isNil(cn) {
+			if !v.properties[n].isNil(cn) {
 				last = false
 				break
 			}

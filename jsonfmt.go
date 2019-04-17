@@ -9,12 +9,12 @@ import (
 // JSONFormatter is ... TODO
 type JSONFormatter struct{}
 
-func (f *JSONFormatter) fprint(w io.Writer, v value, cn casename, i int) {
+func (f *JSONFormatter) fprint(w io.Writer, v value, cn casename, indent int) {
 	switch val := v.(type) {
 	case *vObject:
-		f.fprintObject(w, val, cn, i)
+		f.fprintObject(w, val, cn, indent)
 	case *vArray:
-		f.fprintArray(w, val, cn, i)
+		f.fprintArray(w, val, cn, indent)
 	case *vString:
 		f.fprintString(w, val, cn)
 	case *vNum:
@@ -24,13 +24,13 @@ func (f *JSONFormatter) fprint(w io.Writer, v value, cn casename, i int) {
 	}
 }
 
-func (f *JSONFormatter) fprintObject(w io.Writer, v *vObject, cn casename, i int) {
+func (f *JSONFormatter) fprintObject(w io.Writer, v *vObject, cn casename, indent int) {
 	if !v.isNil(cn) {
 		fmt.Fprintln(w, "{")
 		for _, pn := range v.propertyNames {
 			if !v.properties[pn].isNil(cn) {
-				fmt.Fprintf(w, "%s\"%s\": ", indents(i+1), pn)
-				f.fprint(w, v.properties[pn], cn, i+1)
+				fmt.Fprintf(w, "%s\"%s\": ", indents(indent+1), pn)
+				f.fprint(w, v.properties[pn], cn, indent+1)
 				if !v.lastProperty(cn, pn) {
 					fmt.Fprintln(w, ",")
 				} else {
@@ -38,17 +38,17 @@ func (f *JSONFormatter) fprintObject(w io.Writer, v *vObject, cn casename, i int
 				}
 			}
 		}
-		fmt.Fprintf(w, "%s}", indents(i))
+		fmt.Fprintf(w, "%s}", indents(indent))
 	}
 }
 
-func (f *JSONFormatter) fprintArray(w io.Writer, v *vArray, cn casename, i int) {
+func (f *JSONFormatter) fprintArray(w io.Writer, v *vArray, cn casename, indent int) {
 	if !v.isNil(cn) {
 		fmt.Fprintln(w, "[")
 		for j, e := range v.elements {
 			if !e.isNil(cn) {
-				fmt.Fprintf(w, "%s", indents(i+1))
-				f.fprint(w, e, cn, i+1)
+				fmt.Fprintf(w, "%s", indents(indent+1))
+				f.fprint(w, e, cn, indent+1)
 				if !v.lastElement(cn, j) {
 					fmt.Fprintln(w, ",")
 				} else {
@@ -56,7 +56,7 @@ func (f *JSONFormatter) fprintArray(w io.Writer, v *vArray, cn casename, i int) 
 				}
 			}
 		}
-		fmt.Fprintf(w, "%s]", indents(i))
+		fmt.Fprintf(w, "%s]", indents(indent))
 	}
 }
 
@@ -83,6 +83,6 @@ func (f *JSONFormatter) escapeString(s string) string {
 	return s
 }
 
-func (f *JSONFormatter) extention() string {
+func (f *JSONFormatter) extension() string {
 	return "json"
 }
