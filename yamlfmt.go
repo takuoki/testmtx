@@ -4,108 +4,119 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/takuoki/testmtx/sheet"
 )
 
-type yamlf struct{}
-
-func (f *yamlf) OutData(out io.Writer, d sheet.Data, c sheet.Casename, i int) error {
-	return f.OutData2(out, d, c, i, false)
+// YamlFormatter is ... TODO
+type YamlFormatter struct {
+	formatter
 }
 
-func (f *yamlf) OutData2(out io.Writer, d sheet.Data, c sheet.Casename, i int, br bool) error {
-	switch t := d.(type) {
-	case *sheet.DString:
-		f.outString(out, t, c)
-	case *sheet.DNum:
-		f.outNum(out, t, c)
-	case *sheet.DBool:
-		f.outBool(out, t, c)
-	case *sheet.DObject:
-		f.outObject(out, t, c, i, br)
-	case *sheet.DArray:
-		f.outArray(out, t, c, i, br)
-	default:
-		return fmt.Errorf("no such type (%v)", t)
+// NewYamlFormatter creates a new YamlFormatter.
+// You can change some parameters of the YamlFormatter with YamlFormatOption.
+func NewYamlFormatter(options ...YamlFormatOption) (*YamlFormatter, error) {
+	f := YamlFormatter{
+		formatter{indentStr: "  "},
 	}
-	return nil
+	for _, opt := range options {
+		err := opt(&f)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &f, nil
 }
 
-func (f *yamlf) outObject(out io.Writer, d *sheet.DObject, c sheet.Casename, i int, br bool) {
-	if !d.IsNil(c) {
+// YamlFormatOption changes some parameters of the YamlFormatter.
+type YamlFormatOption func(*YamlFormatter) error
+
+// YamlIndentStr changes the indent string in Yaml file.
+func YamlIndentStr(s string) YamlFormatOption {
+	return func(f *YamlFormatter) error {
+		f.setIndentStr(s)
+		return nil
+	}
+}
+
+func (f *YamlFormatter) fprint(w io.Writer, v value, cn casename, indent int) {
+	f.fprintWithBr(w, v, cn, indent, false)
+}
+
+func (f *YamlFormatter) fprintWithBr(w io.Writer, v value, cn casename, indent int, br bool) {
+	switch t := v.(type) {
+	case *vObject:
+		f.fprintObject(w, t, cn, indent, br)
+	case *vArray:
+		f.fprintArray(w, t, cn, indent, br)
+	case *vString:
+		f.fprintString(w, t, cn)
+	case *vNum:
+		f.fprintNum(w, t, cn)
+	case *vBool:
+		f.fprintBool(w, t, cn)
+	}
+}
+
+func (f *YamlFormatter) fprintObject(w io.Writer, v *vObject, cn casename, i int, br bool) {
+	if !v.isNil(cn) {
 		if br {
-			out.Write([]byte("\n"))
+			fmt.Fprintln(w)
 		}
-		for _, pn := range d.PropertyNames {
-			if !d.Properties[pn].IsNil(c) {
-				idt := ""
-				if br || !d.FirstProperty(c, pn) {
+		for _, pn := range v.propertyNames {
+			if !v.properties[pn].isNil(cn) {
+				var idt string
+				if br || !v.firstProperty(cn, pn) {
 					idt = f.indents(i + 1)
 				}
-				out.Write([]byte(fmt.Sprintf("%s%s: ", idt, pn)))
-				f.OutData2(out, d.Properties[pn], c, i+1, true)
-				if !d.LastProperty(c, pn) {
-					out.Write([]byte("\n"))
+				fmt.Fprintf(w, "%s%s: ", idt, pn)
+				f.fprintWithBr(w, v.properties[pn], cn, i+1, true)
+				if !v.lastProperty(cn, pn) {
+					fmt.Fprintln(w)
 				}
 			}
 		}
 	}
 }
 
-func (f *yamlf) outArray(out io.Writer, d *sheet.DArray, c sheet.Casename, i int, br bool) {
-	if !d.IsNil(c) {
+func (f *YamlFormatter) fprintArray(w io.Writer, v *vArray, cn casename, i int, br bool) {
+	if !v.isNil(cn) {
 		if br {
-			out.Write([]byte("\n"))
+			fmt.Fprintln(w)
 		}
-		for j, e := range d.Elements {
-			if !e.IsNil(c) {
+		for j, e := range v.elements {
+			if !e.isNil(cn) {
 				idt := ""
-				if br || !d.FirstElement(c, j) {
+				if br || !v.firstElement(cn, j) {
 					idt = f.indents(i + 1)
 				}
-				out.Write([]byte(fmt.Sprintf("%s- ", idt)))
-				f.OutData2(out, e, c, i+1, false)
-				if !d.LastElement(c, j) {
-					out.Write([]byte("\n"))
+				fmt.Fprintf(w, "%s- ", idt)
+				f.fprintWithBr(w, e, cn, i+1, false)
+				if !v.lastElement(cn, j) {
+					fmt.Fprintln(w)
 				}
 			}
 		}
 	}
 }
 
-func (f *yamlf) outString(out io.Writer, d *sheet.DString, c sheet.Casename) {
-	if !d.IsNil(c) {
-		out.Write([]byte(fmt.Sprintf("%s", f.escapeString(*d.Values[c]))))
+func (f *YamlFormatter) fprintString(w io.Writer, v *vString, cn casename) {
+	if !v.isNil(cn) {
+		s := strings.Replace(*v.values[cn], "\n", "\\n", -1)
+		fmt.Fprint(w, s)
 	}
 }
 
-func (f *yamlf) outNum(out io.Writer, d *sheet.DNum, c sheet.Casename) {
-	if !d.IsNil(c) {
-		out.Write([]byte(fmt.Sprintf("%s", *d.Values[c])))
+func (f *YamlFormatter) fprintNum(w io.Writer, v *vNum, cn casename) {
+	if !v.isNil(cn) {
+		fmt.Fprintf(w, "%s", *v.values[cn])
 	}
 }
 
-func (f *yamlf) outBool(out io.Writer, d *sheet.DBool, c sheet.Casename) {
-	if !d.IsNil(c) {
-		out.Write([]byte(fmt.Sprintf("%t", *d.Values[c])))
+func (f *YamlFormatter) fprintBool(w io.Writer, v *vBool, cn casename) {
+	if !v.isNil(cn) {
+		fmt.Fprintf(w, "%t", *v.values[cn])
 	}
 }
 
-func (f *yamlf) indents(i int) string {
-	indent := "  "
-	str := ""
-	for j := 0; j < i-1; j++ {
-		str += indent
-	}
-	return str
-}
-
-func (f *yamlf) escapeString(str string) string {
-	str = strings.Replace(str, "\n", "\\n", -1)
-	return str
-}
-
-func (f *yamlf) Extention() string {
+func (f *YamlFormatter) extension() string {
 	return "yaml"
 }

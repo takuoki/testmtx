@@ -90,7 +90,8 @@ func (f *JSONFormatter) fprintArray(w io.Writer, v *vArray, cn casename, indent 
 
 func (f *JSONFormatter) fprintString(w io.Writer, v *vString, cn casename) {
 	if !v.isNil(cn) {
-		fmt.Fprintf(w, "\"%s\"", f.escapeString(*v.values[cn]))
+		s := strings.Replace(*v.values[cn], "\n", "\\n", -1)
+		fmt.Fprintf(w, "\"%s\"", s)
 	}
 }
 
@@ -104,11 +105,6 @@ func (f *JSONFormatter) fprintBool(w io.Writer, v *vBool, cn casename) {
 	if !v.isNil(cn) {
 		fmt.Fprintf(w, "%t", *v.values[cn])
 	}
-}
-
-func (f *JSONFormatter) escapeString(s string) string {
-	s = strings.Replace(s, "\n", "\\n", -1)
-	return s
 }
 
 func (f *JSONFormatter) extension() string {

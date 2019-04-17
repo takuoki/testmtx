@@ -68,13 +68,13 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 	switch c.String("format") {
 	case "json":
 		f, err = testmtx.NewJSONFormatter(testmtx.JSONIndentStr(c.String("indent")))
-		if err != nil {
-			return err
-		}
-	// case "yaml":
-	// 	f = &yamlf{}
+	case "yaml":
+		f, err = testmtx.NewYamlFormatter(testmtx.YamlIndentStr(c.String("indent")))
 	default:
 		return fmt.Errorf("no such format (%s)", c.String("format"))
+	}
+	if err != nil {
+		return err
 	}
 
 	ctx := context.Background()
