@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// JSONFormatter is ... TODO
+// JSONFormatter is a struct to format the sheet object as JSON.
+// Create it using NewJSONFormatter function.
 type JSONFormatter struct {
 	formatter
 }
@@ -15,7 +16,7 @@ type JSONFormatter struct {
 // You can change some parameters of the JSONFormatter with JSONFormatOption.
 func NewJSONFormatter(options ...JSONFormatOption) (*JSONFormatter, error) {
 	f := JSONFormatter{
-		formatter{indentStr: "  "},
+		formatter{indentStr: defaultIndentStr},
 	}
 	for _, opt := range options {
 		err := opt(&f)

@@ -78,7 +78,7 @@ func PropLevel(level int) ParseOption {
 func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 
 	if p == nil {
-		return nil, nil
+		return nil, errors.New("Parser is not initilized")
 	}
 
 	if s.Value(p.caseRow, p.caseStartClm) == "" {
@@ -99,7 +99,7 @@ func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 		}
 		for _, n := range sh.cases {
 			if casename(cn) == n {
-				return nil, fmt.Errorf("Case name is duplicated (sheet=%s, case=%s)", sheetName, cn)
+				return nil, fmt.Errorf("Case name is duplicated (case=%s, sheet=%s)", cn, sheetName)
 			}
 		}
 
@@ -113,17 +113,17 @@ func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 			continue
 		}
 		if p.propLevel(rows[ri]) > 1 {
-			return nil, fmt.Errorf("Must not exist property that does not belong to the root property (sheet=%s, row=%d)", sheetName, ri)
+			return nil, fmt.Errorf("Must not exist property that does not belong to the root property (row=%d, sheet=%s)", ri, sheetName)
 		}
 		pn := propname(strings.Replace(rows[ri].Value(p.propStartClm), " ", "_", -1))
 		if _, ok := sh.valueMap[pn]; ok {
-			return nil, fmt.Errorf("Root property name is duplicated (sheet=%s, row=%d)", sheetName, ri)
+			return nil, fmt.Errorf("Root property name is duplicated (row=%d, sheet=%s)", ri, sheetName)
 		}
 		var val value
 		var err error
 		val, ri, err = p.getValues(rows, ri, 1, sh.cases)
 		if err != nil {
-			return nil, fmt.Errorf("%v, sheet=%s", err, sheetName)
+			return nil, fmt.Errorf("%v, sheet=%s)", err, sheetName)
 		}
 		sh.valueMap[pn] = val
 	}
@@ -131,7 +131,7 @@ func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 	return sh, nil
 }
 
-func (p *Parser) maxLevel() int {
+func (p *Parser) maxPropLevel() int {
 	return p.propEndClm - p.propStartClm + 1
 }
 
@@ -146,6 +146,7 @@ func (p *Parser) propLevel(row gsheets.Row) int {
 }
 
 func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (value, int, error) {
+
 	var val value
 	switch rows[ri].Value(p.typeClm) {
 	case typeObj:
@@ -160,7 +161,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 				ri--
 				break
 			} else if lv > l+1 {
-				return nil, 0, fmt.Errorf("Invalid level of object child: row=%d", ri)
+				return nil, 0, fmt.Errorf("Invalid level of object child (row=%d", ri)
 			}
 			pn := propname(rows[ri].Value(p.propStartClm + l))
 			pns = append(pns, pn)
@@ -185,7 +186,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 				ri--
 				break
 			} else if lv > l+1 {
-				return nil, 0, fmt.Errorf("Invalid level of array child: row=%d", ri)
+				return nil, 0, fmt.Errorf("Invalid level of array child (row=%d", ri)
 			}
 			var tmpV value
 			tmpV, ri, err = p.getValues(rows, ri, l+1, cases)
@@ -223,7 +224,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 			values: v,
 		}
 	default:
-		return nil, ri, fmt.Errorf("Invalid type: row=%d, type=\"%s\"", ri, rows[ri].Value(p.typeClm))
+		return nil, ri, fmt.Errorf("Invalid type (type=\"%s\", row=%d", rows[ri].Value(p.typeClm), ri)
 	}
 	return val, ri, nil
 }
@@ -239,7 +240,7 @@ func (p *Parser) getObjAryValues(row gsheets.Row, ri int, cases []casename) (map
 		case strNew:
 			m[cases[i]] = true
 		default:
-			return nil, fmt.Errorf("Unable to convert array value: row=%d, value=\"%s\"", ri, str)
+			return nil, fmt.Errorf("Unable to convert array value (value=\"%s\", row=%d", str, ri)
 		}
 	}
 
@@ -276,7 +277,7 @@ func (p *Parser) getNumValues(row gsheets.Row, ri int, cases []casename) (map[ca
 		default:
 			_, err := strconv.ParseFloat(str, 64)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to convert int value: row=%d, value=\"%s\"", ri, str)
+				return nil, fmt.Errorf("Unable to convert int value (value=\"%s\", row=%d", str, ri)
 			}
 			m[cases[i]] = &str
 		}
@@ -300,7 +301,7 @@ func (p *Parser) getBoolValues(row gsheets.Row, ri int, cases []casename) (map[c
 			f := false
 			m[cases[i]] = &f
 		default:
-			return nil, fmt.Errorf("Unable to convert bool value: row=%d, value=\"%s\"", ri, str)
+			return nil, fmt.Errorf("Unable to convert bool value (value=\"%s\", row=%d", str, ri)
 		}
 	}
 

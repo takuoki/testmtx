@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// YamlFormatter is ... TODO
+// YamlFormatter is a struct to format the sheet object as YAML.
+// Create it using NewYamlFormatter function.
 type YamlFormatter struct {
 	formatter
 }
@@ -15,7 +16,7 @@ type YamlFormatter struct {
 // You can change some parameters of the YamlFormatter with YamlFormatOption.
 func NewYamlFormatter(options ...YamlFormatOption) (*YamlFormatter, error) {
 	f := YamlFormatter{
-		formatter{indentStr: "  "},
+		formatter{indentStr: defaultIndentStr},
 	}
 	for _, opt := range options {
 		err := opt(&f)

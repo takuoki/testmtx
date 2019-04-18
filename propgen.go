@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	lf              = []byte("\n")
 	importMap       = map[string]string{}
 	enumPropertyMap = map[string]*enumProperty{}
 
@@ -29,7 +28,8 @@ func (e *enumProperty) valid() bool {
 	return e.name && e.value
 }
 
-// PropGenerator is ... TODO
+// PropGenerator is a struct to generate a property list with Go struct.
+// Create it using NewPropGenerator function.
 type PropGenerator struct {
 	parser      *Parser
 	repeatCount int
@@ -60,30 +60,34 @@ type PropGenOption func(*PropGenerator) error
 
 // PropLevel4Gen changes the property level on the spreadsheet.
 func PropLevel4Gen(level int) PropGenOption {
-	return func(p *PropGenerator) error {
+	return func(g *PropGenerator) error {
 		if level < 1 {
 			return errors.New("Property level should be positive value")
 		}
-		p.parser.propEndClm = p.parser.propStartClm + level - 1
-		p.parser.typeClm = p.parser.propEndClm + 1
-		p.parser.caseStartClm = p.parser.typeClm + 1
+		g.parser.propEndClm = g.parser.propStartClm + level - 1
+		g.parser.typeClm = g.parser.propEndClm + 1
+		g.parser.caseStartClm = g.parser.typeClm + 1
 		return nil
 	}
 }
 
 // RepeatCount changes the repeat count of the array properties.
 func RepeatCount(c int) PropGenOption {
-	return func(p *PropGenerator) error {
+	return func(g *PropGenerator) error {
 		if c < 1 {
 			return errors.New("Repeat count should be positive value")
 		}
-		p.repeatCount = c
+		g.repeatCount = c
 		return nil
 	}
 }
 
-// Generate is ... TODO
-func (p *PropGenerator) Generate(file, tName string) error {
+// Generate is a method to generate a property list with Go struct.
+func (g *PropGenerator) Generate(file, tName string) error {
+
+	if g == nil {
+		return errors.New("PropGenerator is not initilized")
+	}
 
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, file, nil, 0)
@@ -130,10 +134,10 @@ func (p *PropGenerator) Generate(file, tName string) error {
 			for _, s := range gd.Specs {
 				if ts, ok := s.(*ast.TypeSpec); ok {
 					if ts.Name.Name == tName {
-						out := os.Stdout
-						out.Write([]byte(strcase.ToSnake(tName)))
-						p.outTab4Type(out, 0)
-						return p.outData(out, ts.Type, 0)
+						w := os.Stdout
+						fmt.Fprint(w, strcase.ToSnake(tName))
+						g.outTab4Type(w, 0)
+						return g.outData(w, ts.Type, 0)
 					}
 				}
 			}
@@ -143,9 +147,9 @@ func (p *PropGenerator) Generate(file, tName string) error {
 	return errors.New("no such type")
 }
 
-func (p *PropGenerator) outData(out io.Writer, d ast.Expr, i int) error {
+func (g *PropGenerator) outData(w io.Writer, d ast.Expr, i int) error {
 
-	if i >= p.parser.maxLevel() {
+	if i >= g.parser.maxPropLevel() {
 		return fmt.Errorf("the type hierarchy exceeds the properties level. specify option '-proplevel' and re-execute")
 	}
 
@@ -153,15 +157,15 @@ func (p *PropGenerator) outData(out io.Writer, d ast.Expr, i int) error {
 
 	switch t := d.(type) {
 	case *ast.StructType:
-		err = p.outObject(out, t, i)
+		err = g.outObject(w, t, i)
 	case *ast.ArrayType:
-		err = p.outArray(out, t, i)
+		err = g.outArray(w, t, i)
 	case *ast.Ident:
-		err = p.outIdent(out, t, i)
+		err = g.outIdent(w, t, i)
 	case *ast.SelectorExpr:
-		err = p.outSelectorExpr(out, t, i)
+		err = g.outSelectorExpr(w, t, i)
 	case *ast.StarExpr:
-		err = p.outData(out, t.X, i)
+		err = g.outData(w, t.X, i)
 	default:
 		return fmt.Errorf("don't support type (%+v)", t)
 	}
@@ -169,17 +173,16 @@ func (p *PropGenerator) outData(out io.Writer, d ast.Expr, i int) error {
 	return err
 }
 
-func (p *PropGenerator) outObject(out io.Writer, t *ast.StructType, i int) error {
-	out.Write([]byte(typeObj))
-	out.Write(lf)
+func (g *PropGenerator) outObject(w io.Writer, t *ast.StructType, i int) error {
+	fmt.Fprintln(w, typeObj)
 
 	for _, f := range t.Fields.List {
-		p.outTab(out, i+1)
-		if err := p.outKeyName(out, f.Tag); err != nil {
+		g.outTab(w, i+1)
+		if err := g.outKeyName(w, f.Tag); err != nil {
 			return err
 		}
-		p.outTab4Type(out, i+1)
-		if err := p.outData(out, f.Type, i+1); err != nil {
+		g.outTab4Type(w, i+1)
+		if err := g.outData(w, f.Type, i+1); err != nil {
 			return err
 		}
 	}
@@ -187,15 +190,14 @@ func (p *PropGenerator) outObject(out io.Writer, t *ast.StructType, i int) error
 	return nil
 }
 
-func (p *PropGenerator) outArray(out io.Writer, t *ast.ArrayType, i int) error {
-	out.Write([]byte(typeAry))
-	out.Write(lf)
+func (g *PropGenerator) outArray(w io.Writer, t *ast.ArrayType, i int) error {
+	fmt.Fprintln(w, typeAry)
 
 	for j := 0; j < repeated; j++ {
-		p.outTab(out, i+1)
-		out.Write([]byte(fmt.Sprintf("* %d", j)))
-		p.outTab4Type(out, i+1)
-		err := p.outData(out, t.Elt, i+1)
+		g.outTab(w, i+1)
+		fmt.Fprintf(w, "* %d", j)
+		g.outTab4Type(w, i+1)
+		err := g.outData(w, t.Elt, i+1)
 		if err != nil {
 			return err
 		}
@@ -204,7 +206,7 @@ func (p *PropGenerator) outArray(out io.Writer, t *ast.ArrayType, i int) error {
 	return nil
 }
 
-func (p *PropGenerator) outIdent(out io.Writer, t *ast.Ident, i int) error {
+func (g *PropGenerator) outIdent(w io.Writer, t *ast.Ident, i int) error {
 
 	tName := ""
 	switch t.Name {
@@ -220,20 +222,19 @@ func (p *PropGenerator) outIdent(out io.Writer, t *ast.Ident, i int) error {
 		} else {
 			if t.Obj != nil {
 				if ts, ok := t.Obj.Decl.(*ast.TypeSpec); ok {
-					return p.outData(out, ts.Type, i)
+					return g.outData(w, ts.Type, i)
 				}
 			}
 			panic(fmt.Sprintf("don't expected type (%s)", t.Name))
 		}
 	}
 
-	out.Write([]byte(tName))
-	out.Write(lf)
+	fmt.Fprintln(w, tName)
 
 	return nil
 }
 
-func (p *PropGenerator) outSelectorExpr(out io.Writer, t *ast.SelectorExpr, i int) error {
+func (g *PropGenerator) outSelectorExpr(w io.Writer, t *ast.SelectorExpr, i int) error {
 
 	var impPath string
 	if x, ok := t.X.(*ast.Ident); ok {
@@ -264,23 +265,22 @@ func (p *PropGenerator) outSelectorExpr(out io.Writer, t *ast.SelectorExpr, i in
 		tName = fmt.Sprintf("<%s>", t.Sel.Name)
 	}
 
-	out.Write([]byte(tName))
-	out.Write(lf)
+	fmt.Fprintln(w, tName)
 
 	return nil
 }
 
-func (p *PropGenerator) outTab(out io.Writer, i int) {
+func (g *PropGenerator) outTab(w io.Writer, i int) {
 	for j := 0; j < i; j++ {
-		out.Write([]byte("\t"))
+		fmt.Fprint(w, "\t")
 	}
 }
 
-func (p *PropGenerator) outTab4Type(out io.Writer, i int) {
-	p.outTab(out, p.parser.maxLevel()-i)
+func (g *PropGenerator) outTab4Type(w io.Writer, i int) {
+	g.outTab(w, g.parser.maxPropLevel()-i)
 }
 
-func (p *PropGenerator) outKeyName(out io.Writer, tag *ast.BasicLit) error {
+func (g *PropGenerator) outKeyName(w io.Writer, tag *ast.BasicLit) error {
 
 	if tag == nil {
 		return errors.New("not found json tag")
@@ -289,7 +289,7 @@ func (p *PropGenerator) outKeyName(out io.Writer, tag *ast.BasicLit) error {
 	pre := "json:\""
 	s := strings.Index(tag.Value, pre) + len(pre)
 	e := strings.Index(tag.Value[s:], "\"") + s
-	out.Write([]byte(strings.Split(tag.Value[s:e], ",")[0]))
+	fmt.Fprint(w, strings.Split(tag.Value[s:e], ",")[0])
 
 	return nil
 }

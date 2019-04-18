@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 )
 
 var createFile func(name string) (io.WriteCloser, error)
@@ -17,6 +19,7 @@ func init() {
 }
 
 // Formatter is an interface for formatting.
+// This interface has private methods, so cannot create an original formatter outside of this package.
 type Formatter interface {
 	fprint(w io.Writer, v value, cn casename, indent int)
 	extension() string
@@ -25,6 +28,8 @@ type Formatter interface {
 type formatter struct {
 	indentStr string
 }
+
+const defaultIndentStr = "  "
 
 func (f *formatter) setIndentStr(s string) {
 	if f == nil {
@@ -35,7 +40,7 @@ func (f *formatter) setIndentStr(s string) {
 
 func (f *formatter) indents(i int) string {
 	if f == nil {
-		return ""
+		return defaultIndentStr
 	}
 	return strings.Repeat(f.indentStr, i)
 }
@@ -52,23 +57,32 @@ func Output(f Formatter, s *Sheet, outdir string) error {
 		if err := os.MkdirAll(dir, 0777); err != nil {
 			return fmt.Errorf("Unable to make directory: %v", err)
 		}
+		eg := &errgroup.Group{}
 		for _, cn := range s.cases {
-			filepath := fmt.Sprintf("%s/%s_%s.%s", dir, s.name, cn, f.extension())
-			if err := output(f, filepath, v, cn); err != nil {
-				return err
-			}
+			cn := cn
+			eg.Go(func() (er error) {
+				defer func() {
+					if e := recover(); e != nil {
+						er = fmt.Errorf("panic recovered in goroutine: %v", e)
+					}
+				}()
+
+				filepath := fmt.Sprintf("%s/%s_%s.%s", dir, s.name, cn, f.extension())
+
+				file, err := createFile(filepath)
+				if err != nil {
+					return fmt.Errorf("Unable to create file: %v", err)
+				}
+				defer file.Close()
+
+				f.fprint(file, v, cn, 0)
+				return nil
+			})
+		}
+		if err := eg.Wait(); err != nil {
+			return err
 		}
 	}
 
-	return nil
-}
-
-func output(f Formatter, filepath string, v value, cn casename) error {
-	file, err := createFile(filepath)
-	if err != nil {
-		return fmt.Errorf("Unable to create file: %v", err)
-	}
-	defer file.Close()
-	f.fprint(file, v, cn, 0)
 	return nil
 }

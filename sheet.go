@@ -1,6 +1,6 @@
 package testmtx
 
-// Sheet is ... TODO
+// Sheet is a parsed sheet which matches testmtx format.
 type Sheet struct {
 	name     string
 	cases    []casename
@@ -26,10 +26,10 @@ func (v *vObject) isNil(cc casename) bool {
 
 func (v *vObject) firstProperty(cn casename, pn propname) bool {
 	for _, n := range v.propertyNames {
-		if n == pn {
-			return true
-		}
 		if !v.properties[pn].isNil(cn) {
+			if n == pn {
+				return true
+			}
 			return false
 		}
 	}
@@ -37,21 +37,15 @@ func (v *vObject) firstProperty(cn casename, pn propname) bool {
 }
 
 func (v *vObject) lastProperty(cn casename, pn propname) bool {
-	check := false
-	last := true
-	for _, n := range v.propertyNames {
-		if n == pn {
-			check = true
-			continue
-		}
-		if check {
-			if !v.properties[n].isNil(cn) {
-				last = false
-				break
+	for i := len(v.propertyNames) - 1; i >= 0; i-- {
+		if !v.properties[v.propertyNames[i]].isNil(cn) {
+			if v.propertyNames[i] == pn {
+				return true
 			}
+			return false
 		}
 	}
-	return last
+	return false
 }
 
 type vArray struct {
@@ -64,7 +58,7 @@ func (v *vArray) isNil(cn casename) bool {
 }
 
 func (v *vArray) firstElement(cn casename, i int) bool {
-	if i > len(v.elements) {
+	if i > len(v.elements) || v.elements[i].isNil(cn) {
 		return false
 	}
 	for j := 0; j < i; j++ {
@@ -76,8 +70,11 @@ func (v *vArray) firstElement(cn casename, i int) bool {
 }
 
 func (v *vArray) lastElement(cn casename, i int) bool {
-	for i = i + 1; i < len(v.elements); i++ {
-		if !v.elements[i].isNil(cn) {
+	if i > len(v.elements) || v.elements[i].isNil(cn) {
+		return false
+	}
+	for j := i + 1; j < len(v.elements); j++ {
+		if !v.elements[j].isNil(cn) {
 			return false
 		}
 	}
