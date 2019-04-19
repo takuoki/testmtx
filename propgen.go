@@ -28,7 +28,7 @@ func (e *enumProperty) valid() bool {
 	return e.name && e.value
 }
 
-// PropGenerator is a struct to generate a property list with Go struct.
+// PropGenerator is a struct to generate a property list with Go type.
 // Create it using NewPropGenerator function.
 type PropGenerator struct {
 	parser      *Parser
@@ -82,7 +82,7 @@ func RepeatCount(c int) PropGenOption {
 	}
 }
 
-// Generate is a method to generate a property list with Go struct.
+// Generate is a method to generate a property list with Go type.
 func (g *PropGenerator) Generate(file, tName string) error {
 
 	if g == nil {

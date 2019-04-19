@@ -1,62 +1,95 @@
 # testmtx
 
-`testmtx` is a test data generator using Google Spreadsheets.
+A golang package and tool for converting test cases written on Google Spreadsheets to test data files like JSON.
 
-## Description
+<!-- vscode-markdown-toc -->
+* [Description](#Description)
+* [Installation](#Installation)
+* [Requirements](#Requirements)
+* [Usage](#Usage)
+	* [Output Test Data Files](#OutputTestDataFiles)
+		* [1. Create test cases](#Createtestcases)
+		* [2. Execute command](#Executecommand)
+		* [3. Check generated files](#Checkgeneratedfiles)
+	* [Output Property](#OutputProperty)
+		* [1. Create Go type](#CreateGotype)
+		* [2. Execute command](#Executecommand-1)
+* [Config File](#ConfigFile)
 
-`testmtx` helps you to create test data using Google Spreadsheets.
-If you create test case as matrix on Google Spreadsheets, this tool generates some test data like JSON file based on the data you input.
-Using `testmtx`, you can get advantages of **completeness**, **readability** and **consistency**.
+<!-- vscode-markdown-toc-config
+	numbering=false
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
-## Installation
+## <a name='Description'></a>Description
 
-To install `testmtx`, please use `go get`.
-You must have Go 1.9 or greater installed, and `$GOPATH/bin` added to your PATH.
+`testmtx` helps you to create test data files with Google Spreadsheets.
+Once you create test cases as matrix on Google Spreadsheets, this tool generates test data like JSON based on the data you input.
+Using `testmtx`, you can get advantages of **completeness**, **readability** and **consistency** for testing.
 
-```txt
-$ go get github.com/takuoki/testmtx
-...
-$ testmtx -h
-...
+## <a name='Installation'></a>Installation
+
+If you have a Go environment, you can install this tool using `go get`. Before installing, enable the Go module feature.
+
+```bash
+go get github.com/takuoki/testmtx/tools/testmtx
 ```
 
-## Preparation
+If not, download it from [the release page](https://github.com/takuoki/testmtx/releases).
 
-* `credentials.json` for [Google Sheets API](https://developers.google.com/sheets/api/quickstart/go#step_1_turn_on_the)
+## <a name='Requirements'></a>Requirements
+
+This tool uses Google OAuth2.0. So before executing tool, you have to prepare `credentials.json`. See [Go Quickstart](https://developers.google.com/sheets/api/quickstart/go), or [Blog (Japanese)](https://medium.com/veltra-engineering/how-to-use-google-sheets-api-with-golang-9e50ee9e0abc) for the details.
+
+This is brief steps.
 
   1. Create new GCP Project on [GCP Console](https://console.cloud.google.com)
   1. Enable Google Sheets API on [APIs & Services] - [API Library]
   1. Setting OAuth consent screen and create OAuth client ID on [APIs & Services] - [Credentials]
   1. Download JSON file and rename it to `credentials.json`
 
-## Usage
+## <a name='Usage'></a>Usage
 
-### Output Test Data Files
+### <a name='OutputTestDataFiles'></a>Output Test Data Files
 
-Using `out` subcommand, you can generate test data from Google Spreadsheets.
-This tool creates test data for all sheets, and all test cases.
-For each sheet, this tool searches from the beginning of the test case name to the right and end when the test case name becomes blank.
+#### <a name='Createtestcases'></a>1. Create test cases
 
-Blank cells mean `null`, so the property itself is not output.
-If you want to specify it is `null` clearly, you can also use `*null` keyword.
-When you want to output object or array, or empty string, use `*new`,　`*empty` keywords.
+Copy [the Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE) and fill it as you want.
 
-#### Google Spreadsheets
+* Property Area
 
-[Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE)
+  The left side of the sheet is the property area.
+  You should input all property definitions here, and if the property is `array` type, repeat it as you need.
+  Root property names is not used in the output files. This is used as the output directory name.
+  If you already have a Go type for your test data, you can generate a property list using [`prop` sub command](#OutputProperty).
+  If the property level is not enough at the default 10, add columns. In this case, adjust at run time with the `-proplevel` or `-pl` option.
+
+* Case Area
+
+  The right side of the sheet is the case area. Each column is one test case.
+  You should input case names and test data for that case.
+  A blank cells mean `null`, so the property itself is not output.
+  If you want to specify `null` clearly, you can also use `*null` keyword.
+  When you want to output objects or arrays, and empty strings, use `*new` and `*empty` keywords.
 
 ![Sample Sheet](https://github.com/takuoki/testmtx/blob/image/image/sample_sheet.png)
 
-#### Command: out
+#### <a name='Executecommand'></a>2. Execute command
 
-```txt
+Using `out` sub command, you can generate test data with Google Spreadsheets.
+This tool creates test data for all sheets, and all test cases.
+If you want to ignore some sheets, use the except sheet name feature in configuration.
+For each sheet, this tool searches from the beginning of the test case name to the right and end when the test case name becomes blank.
+
+```bash
 $ testmtx -c config.json out -s sample
 output completed successfully!
 ```
 
 sample : sheet ID alias for `1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE` (see [Config File](#config-file))
 
-#### Generated File
+#### <a name='Checkgeneratedfiles'></a>3. Check generated files
 
 ./out/request/sheet_case1.json
 
@@ -91,13 +124,11 @@ sample : sheet ID alias for `1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE` (see 
 }
 ```
 
-### Output Property
+### <a name='OutputProperty'></a>Output Property
 
-Using `prop` subcommand, you can generate the list of properties for Google Spreadsheets from Go type.
-This is a subsidiary function, and you can modify this output list.
-If the target type refers some other files, you should modify the output type.
+#### <a name='CreateGotype'></a>1. Create Go type
 
-#### Golang File
+If you already have a Go type for your test data like below, you can generate a property list with this tool.
 
 ```go
 type Request struct {
@@ -115,9 +146,13 @@ type Request struct {
 }
 ```
 
-#### Command: prop
+#### <a name='Executecommand-1'></a>2. Execute command
 
-```txt
+Using `prop` sub command, you can generate a property list for Google Spreadsheets from Go type.
+This is a subsidiary function, and you can modify this output list.
+If the target type refers some other files, you should modify the output type.
+
+```bash
 $ testmtx prop -f sample/sample.go -t Request
 request             object
     num_key         numder
@@ -137,7 +172,7 @@ request             object
 output completed successfully!
 ```
 
-## Config File
+## <a name='ConfigFile'></a>Config File
 
 You can use several additional functions with the config file.
 When you want to use these functions, specify config file as command line argument.

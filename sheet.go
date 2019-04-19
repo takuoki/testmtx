@@ -1,3 +1,11 @@
+// Package testmtx helps you to create test data files with Google Spreadsheets.
+// Once you create test cases as matrix on Google Spreadsheets,
+// this tool generates test data like JSON based on the data you input.
+// Using testmtx, you can get advantages of `completeness`, `readability` and `consistency` for testing.
+//
+// This package is just liblary.
+// If what you want is just to use, see the standard tool below which uses this package.
+// - github.com/takuoki/testmtx/tools/testmtx
 package testmtx
 
 // Sheet is a parsed sheet which matches testmtx format.
