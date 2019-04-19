@@ -13,24 +13,24 @@ import (
 func init() {
 	subCmdList = append(subCmdList, cli.Command{
 		Name:  "out",
-		Usage: "output test data files",
+		Usage: "Outputs test data files",
 		Action: func(c *cli.Context) error {
 			return action(c, &output{})
 		},
 		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "sheet, s",
+				Usage: "google spreadsheet id (mandatory)",
+			},
 			cli.StringFlag{
 				Name:  "auth, a",
 				Value: "credentials.json",
 				Usage: "credential file for Google Sheets API",
 			},
 			cli.StringFlag{
-				Name:  "sheet, s",
-				Usage: "google spreadsheet id (mandatory)",
-			},
-			cli.StringFlag{
 				Name:  "format, f",
 				Value: "json",
-				Usage: "output format (json, yaml)",
+				Usage: "output format type (json, yaml)",
 			},
 			cli.StringFlag{
 				Name:  "out, o",
@@ -40,7 +40,7 @@ func init() {
 			cli.IntFlag{
 				Name:  "proplevel, pl",
 				Value: 10,
-				Usage: "properties level (if you extend properties columns, mandatory)",
+				Usage: "property level (if you extend properties columns, mandatory)",
 			},
 			cli.StringFlag{
 				Name:  "indent, i",
@@ -56,12 +56,12 @@ type output struct{}
 func (o *output) Run(c *cli.Context, conf *config) error {
 
 	if c.String("sheet") == "" {
-		return errors.New("no google spreadsheet id")
+		return errors.New("Please specify a google spreadsheet id")
 	}
 
 	p, err := testmtx.NewParser(testmtx.PropLevel(c.Int("proplevel")))
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to create parser: %v", err)
 	}
 
 	var f testmtx.Formatter
@@ -71,17 +71,17 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 	case "yaml":
 		f, err = testmtx.NewYamlFormatter(testmtx.YamlIndentStr(c.String("indent")))
 	default:
-		return fmt.Errorf("no such format (%s)", c.String("format"))
+		return fmt.Errorf("Invalid format type (%s)", c.String("format"))
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to create formatter: %v", err)
 	}
 
 	ctx := context.Background()
 	ctx = gsheets.WithCache(ctx)
 	client, err := gsheets.NewForCLI(ctx, c.String("auth"))
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to create gsheets client: %v", err)
 	}
 
 	sheetID := c.String("sheet")
@@ -91,7 +91,7 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 
 	sheetNames, err := client.GetSheetNames(ctx, sheetID)
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to retrieve sheet names: %v", err)
 	}
 
 	for _, sheetName := range sheetNames {
@@ -100,19 +100,19 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 		}
 		s, err := client.GetSheet(ctx, sheetID, sheetName)
 		if err != nil {
-			return err
+			return fmt.Errorf("Unable to retrieve sheet data: %v", err)
 		}
 		sh, err := p.Parse(s, sheetName)
 		if err != nil {
-			return err
+			return fmt.Errorf("Unable to parse sheet data: %v", err)
 		}
 		err = testmtx.Output(f, sh, c.String("out"))
 		if err != nil {
-			return err
+			return fmt.Errorf("Unable to output test data: %v", err)
 		}
 	}
 
-	fmt.Println("output completed successfully!")
+	fmt.Println("complete!")
 
 	return nil
 }

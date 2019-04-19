@@ -9,10 +9,11 @@ import (
 type config struct {
 	ExceptSheetNames []string `json:"except_sheet_names"`
 	ExceptSheetSet   map[string]struct{}
-	SheetAliasList   []struct {
+	SheetList        []struct {
+		Name    string `json:"name"`
 		Alias   string `json:"alias"`
 		SheetID string `json:"sheet_id"`
-	} `json:"sheet_alias_list"`
+	} `json:"sheet_list"`
 	SheetAliasMap map[string]string
 }
 
@@ -22,12 +23,11 @@ func readConfig(configName string) (*config, error) {
 
 	jsonStr, err := ioutil.ReadFile(configName)
 	if err != nil {
-		return nil, fmt.Errorf("not found config file (%s)", configName)
+		return nil, fmt.Errorf("Config file not found (%s)", configName)
 	}
 
-	err = json.Unmarshal(jsonStr, conf)
-	if err != nil {
-		return nil, fmt.Errorf("something wrong in config file (%s)", configName)
+	if err := json.Unmarshal(jsonStr, conf); err != nil {
+		return nil, fmt.Errorf("Invalid JSON format in config file (%s)", configName)
 	}
 
 	// ExceptSheetSet
@@ -38,7 +38,7 @@ func readConfig(configName string) (*config, error) {
 
 	// SheetAliasMap
 	conf.SheetAliasMap = map[string]string{}
-	for _, sa := range conf.SheetAliasList {
+	for _, sa := range conf.SheetList {
 		conf.SheetAliasMap[sa.Alias] = sa.SheetID
 	}
 

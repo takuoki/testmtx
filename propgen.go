@@ -31,6 +31,7 @@ func (e *enumProperty) valid() bool {
 // PropGenerator is a struct to generate a property list with Go type.
 // Create it using NewPropGenerator function.
 type PropGenerator struct {
+	w           io.Writer
 	parser      *Parser
 	repeatCount int
 }
@@ -43,6 +44,7 @@ func NewPropGenerator(options ...PropGenOption) (*PropGenerator, error) {
 		return nil, err
 	}
 	p := PropGenerator{
+		w:           os.Stdout,
 		parser:      parser,
 		repeatCount: 3,
 	}
@@ -57,6 +59,14 @@ func NewPropGenerator(options ...PropGenOption) (*PropGenerator, error) {
 
 // PropGenOption changes some parameters of the PropGenerator.
 type PropGenOption func(*PropGenerator) error
+
+// GenWriter changes the writer of the PropGenerator.
+func GenWriter(w io.Writer) PropGenOption {
+	return func(g *PropGenerator) error {
+		g.w = w
+		return nil
+	}
+}
 
 // PropLevel4Gen changes the property level on the spreadsheet.
 func PropLevel4Gen(level int) PropGenOption {
@@ -134,23 +144,22 @@ func (g *PropGenerator) Generate(file, tName string) error {
 			for _, s := range gd.Specs {
 				if ts, ok := s.(*ast.TypeSpec); ok {
 					if ts.Name.Name == tName {
-						w := os.Stdout
-						fmt.Fprint(w, strcase.ToSnake(tName))
-						g.outTab4Type(w, 0)
-						return g.outData(w, ts.Type, 0)
+						fmt.Fprint(g.w, strcase.ToSnake(tName))
+						g.outTab4Type(g.w, 0)
+						return g.outData(g.w, ts.Type, 0)
 					}
 				}
 			}
 		}
 	}
 
-	return errors.New("no such type")
+	return fmt.Errorf("Type not found (%s)", tName)
 }
 
 func (g *PropGenerator) outData(w io.Writer, d ast.Expr, i int) error {
 
 	if i >= g.parser.maxPropLevel() {
-		return fmt.Errorf("the type hierarchy exceeds the properties level. specify option '-proplevel' and re-execute")
+		return fmt.Errorf("Type hierarchy exceeds the property level (%d)", g.parser.maxPropLevel())
 	}
 
 	var err error
@@ -167,7 +176,7 @@ func (g *PropGenerator) outData(w io.Writer, d ast.Expr, i int) error {
 	case *ast.StarExpr:
 		err = g.outData(w, t.X, i)
 	default:
-		return fmt.Errorf("don't support type (%+v)", t)
+		return fmt.Errorf("Don't support type (%+v)", t)
 	}
 
 	return err
@@ -225,7 +234,7 @@ func (g *PropGenerator) outIdent(w io.Writer, t *ast.Ident, i int) error {
 					return g.outData(w, ts.Type, i)
 				}
 			}
-			panic(fmt.Sprintf("don't expected type (%s)", t.Name))
+			panic(fmt.Sprintf("Don't expected type (%s)", t.Name))
 		}
 	}
 
@@ -283,7 +292,7 @@ func (g *PropGenerator) outTab4Type(w io.Writer, i int) {
 func (g *PropGenerator) outKeyName(w io.Writer, tag *ast.BasicLit) error {
 
 	if tag == nil {
-		return errors.New("not found json tag")
+		return errors.New("JSON tag not found")
 	}
 
 	pre := "json:\""

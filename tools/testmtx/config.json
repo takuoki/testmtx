@@ -2,8 +2,9 @@
   "except_sheet_names": [
     "overview"
   ],
-  "sheet_alias_list": [
+  "sheet_list": [
     {
+      "name": "testmtx_sample",
       "alias": "sample",
       "sheet_id": "1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE"
     }

@@ -84,7 +84,7 @@ For each sheet, this tool searches from the beginning of the test case name to t
 
 ```bash
 $ testmtx -c config.json out -s sample
-output completed successfully!
+complete!
 ```
 
 sample : sheet ID alias for `1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE` (see [Config File](#config-file))
@@ -169,7 +169,7 @@ request             object
             key3    numder
             key4    string
 
-output completed successfully!
+complete!
 ```
 
 ## <a name='ConfigFile'></a>Config File
@@ -182,8 +182,9 @@ When you want to use these functions, specify config file as command line argume
   "except_sheet_names": [
     "overview"
   ],
-  "sheet_alias_list": [
+  "sheet_list": [
     {
+      "name": "testmtx_sample",
       "alias": "sample",
       "sheet_id": "1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE"
     }
@@ -192,4 +193,17 @@ When you want to use these functions, specify config file as command line argume
 ```
 
 * except_sheet_names: The sheets listed here are excluded from output.
-* sheet_alias_list: If you define an alias here, you can specify a sheet with an alias name.
+* sheet_list: If you define an alias here, you can specify a sheet with an alias name.
+
+You can check the contents of configuration using `conf` sub command.
+
+```bash
+$ testmtx -c config.json conf
+# Except Sheet Names
+- overview
+
+# Sheet List
+  NAME           | ALIAS  | SPREADSHEET ID
+--------------------------------------------------------------------------
+  testmtx_sample | sample | 1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE
+```
