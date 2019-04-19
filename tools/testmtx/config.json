@@ -1,0 +1,12 @@
+{
+  "except_sheet_names": [
+    "overview"
+  ],
+  "sheet_list": [
+    {
+      "name": "testmtx_sample",
+      "alias": "sample",
+      "sheet_id": "1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE"
+    }
+  ]
+}
