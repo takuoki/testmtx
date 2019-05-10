@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/takuoki/gostr"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestSample(t *testing.T) {
@@ -22,35 +21,39 @@ func TestSample(t *testing.T) {
 	}
 
 	for _, fi := range fis {
-		if fi.IsDir() || strings.Index(fi.Name(), ".json") < 0 {
+		idxJSON := strings.Index(fi.Name(), ".json")
+		if fi.IsDir() || idxJSON < 0 {
 			continue
 		}
 
-		jsonb, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", reqPath, fi.Name()))
-		if err != nil {
-			t.Fatalf("can not read request file (file=%s, err=%s)", fi.Name(), err.Error())
-		}
+		testname := fi.Name()[:idxJSON]
+		t.Run(testname, func(t *testing.T) {
 
-		req := &Request{}
-		if json.Unmarshal(jsonb, req) != nil {
-			t.Fatalf("can not unmarshal request json (file=%s, err=%s)", fi.Name(), err.Error())
-		}
+			jsonb, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", reqPath, fi.Name()))
+			if err != nil {
+				t.Fatalf("can not read request file (file=%s, err=%s)", fi.Name(), err.Error())
+			}
 
-		expJSONb, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", expPath, fi.Name()))
-		if err != nil {
-			t.Fatalf("can not read expected file (file=%s, err=%s)", fi.Name(), err.Error())
-		}
+			req := &Request{}
+			if json.Unmarshal(jsonb, req) != nil {
+				t.Fatalf("can not unmarshal request json (file=%s, err=%s)", fi.Name(), err.Error())
+			}
 
-		exp := &Expected{}
-		if err := json.Unmarshal(expJSONb, &exp); err != nil {
-			t.Fatalf("can not unmarshal expected json (file=%s, err=%s)", fi.Name(), err.Error())
-		}
+			expJSONb, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", expPath, fi.Name()))
+			if err != nil {
+				t.Fatalf("can not read expected file (file=%s, err=%s)", fi.Name(), err.Error())
+			}
 
-		r := Sample(req)
+			exp := &Expected{}
+			if err := json.Unmarshal(expJSONb, &exp); err != nil {
+				t.Fatalf("can not unmarshal expected json (file=%s, err=%s)", fi.Name(), err.Error())
+			}
 
-		if !reflect.DeepEqual(r, exp) {
-			t.Errorf("result is not match (file=%s, expected=%s, actual=%s)",
-				fi.Name(), gostr.Stringify(exp), gostr.Stringify(r))
-		}
+			r := Sample(req)
+			diff := cmp.Diff(exp, r)
+			if diff != "" {
+				t.Errorf("result is not match (diff=%s)", diff)
+			}
+		})
 	}
 }
