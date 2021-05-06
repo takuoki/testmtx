@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/takuoki/clmconv"
-	"github.com/takuoki/gsheets"
+	"github.com/takuoki/gsheets/sheets"
 )
 
 // Property type in spreadsheet.
@@ -75,7 +75,7 @@ func PropLevel(level int) ParseOption {
 }
 
 // Parse parses the sheet values to the sheet object.
-func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
+func (p *Parser) Parse(s sheets.Sheet, sheetName string) (*Sheet, error) {
 
 	if p == nil {
 		return nil, errors.New("Parser is not initilized")
@@ -135,7 +135,7 @@ func (p *Parser) maxPropLevel() int {
 	return p.propEndClm - p.propStartClm + 1
 }
 
-func (p *Parser) propLevel(row gsheets.Row) int {
+func (p *Parser) propLevel(row sheets.Row) int {
 	for i := p.propStartClm; i <= p.propEndClm; i++ {
 		if row.Value(i) != "" {
 			return i - p.propStartClm + 1
@@ -145,7 +145,7 @@ func (p *Parser) propLevel(row gsheets.Row) int {
 	return 0
 }
 
-func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (value, int, error) {
+func (p *Parser) getValues(rows []sheets.Row, ri, l int, cases []casename) (value, int, error) {
 
 	var val value
 	switch rows[ri].Value(p.typeClm) {
@@ -229,7 +229,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 	return val, ri, nil
 }
 
-func (p *Parser) getObjAryValues(row gsheets.Row, ri int, cases []casename) (map[casename]bool, error) {
+func (p *Parser) getObjAryValues(row sheets.Row, ri int, cases []casename) (map[casename]bool, error) {
 
 	m := map[casename]bool{}
 
@@ -247,7 +247,7 @@ func (p *Parser) getObjAryValues(row gsheets.Row, ri int, cases []casename) (map
 	return m, nil
 }
 
-func (p *Parser) getStringValues(row gsheets.Row, ri int, cases []casename) (map[casename]*string, error) {
+func (p *Parser) getStringValues(row sheets.Row, ri int, cases []casename) (map[casename]*string, error) {
 
 	m := map[casename]*string{}
 
@@ -266,7 +266,7 @@ func (p *Parser) getStringValues(row gsheets.Row, ri int, cases []casename) (map
 	return m, nil
 }
 
-func (p *Parser) getNumValues(row gsheets.Row, ri int, cases []casename) (map[casename]*string, error) {
+func (p *Parser) getNumValues(row sheets.Row, ri int, cases []casename) (map[casename]*string, error) {
 
 	m := map[casename]*string{}
 
@@ -286,7 +286,7 @@ func (p *Parser) getNumValues(row gsheets.Row, ri int, cases []casename) (map[ca
 	return m, nil
 }
 
-func (p *Parser) getBoolValues(row gsheets.Row, ri int, cases []casename) (map[casename]*bool, error) {
+func (p *Parser) getBoolValues(row sheets.Row, ri int, cases []casename) (map[casename]*bool, error) {
 
 	m := map[casename]*bool{}
 
