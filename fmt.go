@@ -55,7 +55,7 @@ func Output(f Formatter, s *Sheet, outdir string) error {
 	for k, v := range s.valueMap {
 		dir := fmt.Sprintf("%s/%s", outdir, k)
 		if err := os.MkdirAll(dir, 0777); err != nil {
-			return fmt.Errorf("Unable to make directory: %v", err)
+			return fmt.Errorf("unable to make directory: %v", err)
 		}
 		eg := &errgroup.Group{}
 		for _, cn := range s.cases {
@@ -71,7 +71,7 @@ func Output(f Formatter, s *Sheet, outdir string) error {
 
 				file, err := createFile(filepath)
 				if err != nil {
-					return fmt.Errorf("Unable to create file: %v", err)
+					return fmt.Errorf("unable to create file: %v", err)
 				}
 				defer file.Close()
 

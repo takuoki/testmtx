@@ -72,7 +72,7 @@ func GenWriter(w io.Writer) PropGenOption {
 func PropLevel4Gen(level int) PropGenOption {
 	return func(g *PropGenerator) error {
 		if level < 1 {
-			return errors.New("Property level should be positive value")
+			return errors.New("property level should be positive value")
 		}
 		g.parser.propEndClm = g.parser.propStartClm + level - 1
 		g.parser.typeClm = g.parser.propEndClm + 1
@@ -85,7 +85,7 @@ func PropLevel4Gen(level int) PropGenOption {
 func RepeatCount(c int) PropGenOption {
 	return func(g *PropGenerator) error {
 		if c < 1 {
-			return errors.New("Repeat count should be positive value")
+			return errors.New("repeat count should be positive value")
 		}
 		g.repeatCount = c
 		return nil
@@ -96,7 +96,7 @@ func RepeatCount(c int) PropGenOption {
 func (g *PropGenerator) Generate(file, tName string) error {
 
 	if g == nil {
-		return errors.New("PropGenerator is not initilized")
+		return errors.New("propGenerator is not initilized")
 	}
 
 	fset := token.NewFileSet()
@@ -153,13 +153,13 @@ func (g *PropGenerator) Generate(file, tName string) error {
 		}
 	}
 
-	return fmt.Errorf("Type not found (%s)", tName)
+	return fmt.Errorf("type not found (%s)", tName)
 }
 
 func (g *PropGenerator) outData(w io.Writer, d ast.Expr, i int) error {
 
 	if i >= g.parser.maxPropLevel() {
-		return fmt.Errorf("Type hierarchy exceeds the property level (%d)", g.parser.maxPropLevel())
+		return fmt.Errorf("type hierarchy exceeds the property level (%d)", g.parser.maxPropLevel())
 	}
 
 	var err error
@@ -176,7 +176,7 @@ func (g *PropGenerator) outData(w io.Writer, d ast.Expr, i int) error {
 	case *ast.StarExpr:
 		err = g.outData(w, t.X, i)
 	default:
-		return fmt.Errorf("Don't support type (%+v)", t)
+		return fmt.Errorf("don't support type (%+v)", t)
 	}
 
 	return err

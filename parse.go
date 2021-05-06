@@ -65,7 +65,7 @@ type ParseOption func(*Parser) error
 func PropLevel(level int) ParseOption {
 	return func(p *Parser) error {
 		if level < 1 {
-			return errors.New("Property level should be positive value")
+			return errors.New("property level should be positive value")
 		}
 		p.propEndClm = p.propStartClm + level - 1
 		p.typeClm = p.propEndClm + 1
@@ -82,7 +82,7 @@ func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 	}
 
 	if s.Value(p.caseRow, p.caseStartClm) == "" {
-		return nil, fmt.Errorf("Invalid sheet format (sheet=%s)", sheetName)
+		return nil, fmt.Errorf("invalid sheet format (sheet=%s)", sheetName)
 	}
 
 	sh := &Sheet{
@@ -99,7 +99,7 @@ func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 		}
 		for _, n := range sh.cases {
 			if casename(cn) == n {
-				return nil, fmt.Errorf("Case name is duplicated (case=%s, sheet=%s)", cn, sheetName)
+				return nil, fmt.Errorf("case name is duplicated (case=%s, sheet=%s)", cn, sheetName)
 			}
 		}
 
@@ -113,11 +113,11 @@ func (p *Parser) Parse(s *gsheets.Sheet, sheetName string) (*Sheet, error) {
 			continue
 		}
 		if p.propLevel(rows[ri]) > 1 {
-			return nil, fmt.Errorf("Must not exist property that does not belong to the root property (row=%d, sheet=%s)", ri, sheetName)
+			return nil, fmt.Errorf("must not exist property that does not belong to the root property (row=%d, sheet=%s)", ri, sheetName)
 		}
 		pn := propname(strings.Replace(rows[ri].Value(p.propStartClm), " ", "_", -1))
 		if _, ok := sh.valueMap[pn]; ok {
-			return nil, fmt.Errorf("Root property name is duplicated (row=%d, sheet=%s)", ri, sheetName)
+			return nil, fmt.Errorf("root property name is duplicated (row=%d, sheet=%s)", ri, sheetName)
 		}
 		var val value
 		var err error
@@ -161,7 +161,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 				ri--
 				break
 			} else if lv > l+1 {
-				return nil, 0, fmt.Errorf("Invalid level of object child (row=%d", ri)
+				return nil, 0, fmt.Errorf("invalid level of object child (row=%d", ri)
 			}
 			pn := propname(rows[ri].Value(p.propStartClm + l))
 			pns = append(pns, pn)
@@ -186,7 +186,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 				ri--
 				break
 			} else if lv > l+1 {
-				return nil, 0, fmt.Errorf("Invalid level of array child (row=%d", ri)
+				return nil, 0, fmt.Errorf("invalid level of array child (row=%d", ri)
 			}
 			var tmpV value
 			tmpV, ri, err = p.getValues(rows, ri, l+1, cases)
@@ -224,7 +224,7 @@ func (p *Parser) getValues(rows []gsheets.Row, ri, l int, cases []casename) (val
 			values: v,
 		}
 	default:
-		return nil, ri, fmt.Errorf("Invalid type (type=\"%s\", row=%d", rows[ri].Value(p.typeClm), ri)
+		return nil, ri, fmt.Errorf("invalid type (type=\"%s\", row=%d", rows[ri].Value(p.typeClm), ri)
 	}
 	return val, ri, nil
 }
@@ -240,7 +240,7 @@ func (p *Parser) getObjAryValues(row gsheets.Row, ri int, cases []casename) (map
 		case strNew:
 			m[cases[i]] = true
 		default:
-			return nil, fmt.Errorf("Unable to convert array value (value=\"%s\", row=%d", str, ri)
+			return nil, fmt.Errorf("unable to convert array value (value=\"%s\", row=%d", str, ri)
 		}
 	}
 
@@ -277,7 +277,7 @@ func (p *Parser) getNumValues(row gsheets.Row, ri int, cases []casename) (map[ca
 		default:
 			_, err := strconv.ParseFloat(str, 64)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to convert int value (value=\"%s\", row=%d", str, ri)
+				return nil, fmt.Errorf("unable to convert int value (value=\"%s\", row=%d", str, ri)
 			}
 			m[cases[i]] = &str
 		}
@@ -301,7 +301,7 @@ func (p *Parser) getBoolValues(row gsheets.Row, ri int, cases []casename) (map[c
 			f := false
 			m[cases[i]] = &f
 		default:
-			return nil, fmt.Errorf("Unable to convert bool value (value=\"%s\", row=%d", str, ri)
+			return nil, fmt.Errorf("unable to convert bool value (value=\"%s\", row=%d", str, ri)
 		}
 	}
 

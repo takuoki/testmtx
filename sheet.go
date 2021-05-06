@@ -35,10 +35,7 @@ func (v *vObject) isNil(cc casename) bool {
 func (v *vObject) firstProperty(cn casename, pn propname) bool {
 	for _, n := range v.propertyNames {
 		if !v.properties[pn].isNil(cn) {
-			if n == pn {
-				return true
-			}
-			return false
+			return n == pn
 		}
 	}
 	return false
@@ -47,10 +44,7 @@ func (v *vObject) firstProperty(cn casename, pn propname) bool {
 func (v *vObject) lastProperty(cn casename, pn propname) bool {
 	for i := len(v.propertyNames) - 1; i >= 0; i-- {
 		if !v.properties[v.propertyNames[i]].isNil(cn) {
-			if v.propertyNames[i] == pn {
-				return true
-			}
-			return false
+			return v.propertyNames[i] == pn
 		}
 	}
 	return false
