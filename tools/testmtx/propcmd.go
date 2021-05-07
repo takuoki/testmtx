@@ -55,11 +55,11 @@ func (p *prop) Run(c *cli.Context, _ *config) error {
 		testmtx.RepeatCount(c.Int("repeated")),
 	)
 	if err != nil {
-		return fmt.Errorf("unable to create generator: %v", err)
+		return fmt.Errorf("unable to create generator: %w", err)
 	}
 
 	if err := pg.Generate(c.String("file"), c.String("type")); err != nil {
-		return fmt.Errorf("unable to generate a property list: %v", err)
+		return fmt.Errorf("unable to generate a property list: %w", err)
 	}
 
 	fmt.Println("\ncomplete!")

@@ -65,9 +65,11 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 		return errors.New("specify only one of the 'sheet' option and the 'xlsx' option")
 	}
 
+	const inputTypeGss = "google-spreadsheet"
+	const inputTypeExcel = "excel"
 	inputType := ""
 	if c.String("sheet") != "" {
-		inputType = "google-spreadsheet"
+		inputType = inputTypeGss
 	}
 	if c.String("xlsx") != "" {
 		inputType = "excel"
@@ -93,7 +95,7 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 
 	var d doc
 	switch inputType {
-	case "google-spreadsheet":
+	case inputTypeGss:
 		sheetID := c.String("sheet")
 		if v, ok := conf.SheetAliasMap[sheetID]; ok {
 			sheetID = v
@@ -102,7 +104,7 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 		if err != nil {
 			return fmt.Errorf("unable to create gss doc: %w", err)
 		}
-	case "excel":
+	case inputTypeExcel:
 		d, err = newXlsxDoc(c.String("xlsx"))
 		if err != nil {
 			return fmt.Errorf("unable to create xlsx doc: %w", err)
@@ -120,15 +122,15 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 		}
 		s, err := d.GetSheet(sheetName)
 		if err != nil {
-			return fmt.Errorf("unable to retrieve sheet data: %v", err)
+			return fmt.Errorf("unable to retrieve sheet data: %w", err)
 		}
 		sh, err := p.Parse(s, sheetName)
 		if err != nil {
-			return fmt.Errorf("unable to parse sheet data: %v", err)
+			return fmt.Errorf("unable to parse sheet data: %w", err)
 		}
 		err = testmtx.Output(f, sh, c.String("out"))
 		if err != nil {
-			return fmt.Errorf("unable to output test data: %v", err)
+			return fmt.Errorf("unable to output test data: %w", err)
 		}
 	}
 
