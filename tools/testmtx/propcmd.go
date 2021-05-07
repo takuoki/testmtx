@@ -43,11 +43,11 @@ type prop struct{}
 func (p *prop) Run(c *cli.Context, _ *config) error {
 
 	if c.String("file") == "" {
-		return errors.New("Please specify a file name")
+		return errors.New("please specify a file name")
 	}
 
 	if c.String("type") == "" {
-		return errors.New("Please specify a type name")
+		return errors.New("please specify a type name")
 	}
 
 	pg, err := testmtx.NewPropGenerator(
@@ -55,11 +55,11 @@ func (p *prop) Run(c *cli.Context, _ *config) error {
 		testmtx.RepeatCount(c.Int("repeated")),
 	)
 	if err != nil {
-		return fmt.Errorf("Unable to create generator: %v", err)
+		return fmt.Errorf("unable to create generator: %v", err)
 	}
 
 	if err := pg.Generate(c.String("file"), c.String("type")); err != nil {
-		return fmt.Errorf("Unable to generate a property list: %v", err)
+		return fmt.Errorf("unable to generate a property list: %v", err)
 	}
 
 	fmt.Println("\ncomplete!")

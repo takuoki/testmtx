@@ -27,7 +27,7 @@ type conf struct {
 func (c *conf) Run(ctx *cli.Context, conf *config) error {
 
 	if ctx.GlobalString("config") == "" {
-		return errors.New("Please specify a configuration file")
+		return errors.New("please specify a configuration file")
 	}
 
 	fmt.Fprintln(c.w, "# Except Sheet Names")

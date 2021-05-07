@@ -23,11 +23,11 @@ func readConfig(configName string) (*config, error) {
 
 	jsonStr, err := ioutil.ReadFile(configName)
 	if err != nil {
-		return nil, fmt.Errorf("Config file not found (%s)", configName)
+		return nil, fmt.Errorf("config file not found (%s)", configName)
 	}
 
 	if err := json.Unmarshal(jsonStr, conf); err != nil {
-		return nil, fmt.Errorf("Invalid JSON format in config file (%s)", configName)
+		return nil, fmt.Errorf("invalid JSON format in config file (%s)", configName)
 	}
 
 	// ExceptSheetSet
