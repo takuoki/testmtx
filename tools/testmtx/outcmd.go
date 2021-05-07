@@ -103,7 +103,10 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 			return fmt.Errorf("unable to create gss doc: %w", err)
 		}
 	case "excel":
-		return errors.New("excel version is not implemented")
+		d, err = newXlsxDoc(c.String("xlsx"))
+		if err != nil {
+			return fmt.Errorf("unable to create xlsx doc: %w", err)
+		}
 	}
 
 	sheetNames, err := d.GetSheetNames()
