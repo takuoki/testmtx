@@ -1,20 +1,21 @@
 # testmtx
 
-A golang package and tool for converting test cases written on Google Spreadsheets to test data files like JSON.
+A golang package and tool for converting test cases written on Google Spreadsheets or Microsoft Excel to test data files like JSON.
 
 <!-- vscode-markdown-toc -->
-* [Description](#Description)
-* [Installation](#Installation)
-* [Requirements](#Requirements)
-* [Usage](#Usage)
-	* [Output Test Data Files](#OutputTestDataFiles)
-		* [1. Create test cases](#Createtestcases)
-		* [2. Execute command](#Executecommand)
-		* [3. Check generated files](#Checkgeneratedfiles)
-	* [Output Property](#OutputProperty)
-		* [1. Create Go type](#CreateGotype)
-		* [2. Execute command](#Executecommand-1)
-* [Config File](#ConfigFile)
+- [testmtx](#testmtx)
+  - [<a name='Description'></a>Description](#description)
+  - [<a name='Installation'></a>Installation](#installation)
+  - [<a name='Requirements'></a>Requirements](#requirements)
+  - [<a name='Usage'></a>Usage](#usage)
+    - [<a name='OutputTestDataFiles'></a>Output Test Data Files](#output-test-data-files)
+      - [<a name='Createtestcases'></a>1. Create test cases](#1-create-test-cases)
+      - [<a name='Executecommand'></a>2. Execute command](#2-execute-command)
+      - [<a name='Checkgeneratedfiles'></a>3. Check generated files](#3-check-generated-files)
+    - [<a name='OutputProperty'></a>Output Property](#output-property)
+      - [<a name='CreateGotype'></a>1. Create Go type](#1-create-go-type)
+      - [<a name='Executecommand-1'></a>2. Execute command](#2-execute-command-1)
+  - [<a name='ConfigFile'></a>Config File](#config-file)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -24,8 +25,8 @@ A golang package and tool for converting test cases written on Google Spreadshee
 
 ## <a name='Description'></a>Description
 
-`testmtx` helps you to create test data files with Google Spreadsheets.
-Once you create test cases as matrix on Google Spreadsheets, this tool generates test data like JSON based on the data you input.
+`testmtx` helps you to create test data files with Google Spreadsheets or Microsoft Excel.
+Once you create test cases as matrix on your sheet, this tool generates test data like JSON based on the data you input.
 Using `testmtx`, you can get advantages of **completeness**, **readability** and **consistency** for testing.
 
 ## <a name='Installation'></a>Installation
@@ -39,6 +40,8 @@ go get github.com/takuoki/testmtx/tools/testmtx
 If not, download it from [the release page](https://github.com/takuoki/testmtx/releases).
 
 ## <a name='Requirements'></a>Requirements
+
+**When using Google Spreadsheets**
 
 This tool uses Google OAuth2.0. So before executing tool, you have to prepare `credentials.json`. See [Go Quickstart](https://developers.google.com/sheets/api/quickstart/go), or [Blog (Japanese)](https://medium.com/veltra-engineering/how-to-use-google-sheets-api-with-golang-9e50ee9e0abc) for the details.
 
@@ -56,6 +59,7 @@ This is brief steps.
 #### <a name='Createtestcases'></a>1. Create test cases
 
 Copy [the Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE) and fill it as you want.
+When using Microsoft Excel, create a sheet in the same format.
 
 * Property Area
 
@@ -77,10 +81,12 @@ Copy [the Sample Sheet](https://docs.google.com/spreadsheets/d/1Zs2HI7x8eQ05ICoa
 
 #### <a name='Executecommand'></a>2. Execute command
 
-Using `out` sub command, you can generate test data with Google Spreadsheets.
+Using `out` sub command, you can generate test data with your sheet.
 This tool creates test data for all sheets, and all test cases.
 If you want to ignore some sheets, use the except sheet name feature in configuration.
 For each sheet, this tool searches from the beginning of the test case name to the right and end when the test case name becomes blank.
+
+**Case: Google Spreadsheets**
 
 ```bash
 $ testmtx -c config.json out -s sample
@@ -88,6 +94,13 @@ complete!
 ```
 
 sample : sheet ID alias for `1Zs2HI7x8eQ05ICoaBdv1I1ny_KtmtrE05Lyb7OwYmdE` (see [Config File](#config-file))
+
+**Case: Microsoft Excel**
+
+```bash
+$ testmtx -c config.json out -x sample.xlsx
+complete!
+```
 
 #### <a name='Checkgeneratedfiles'></a>3. Check generated files
 
@@ -193,7 +206,7 @@ When you want to use these functions, specify config file as command line argume
 ```
 
 * except_sheet_names: The sheets listed here are excluded from output.
-* sheet_list: If you define an alias here, you can specify a sheet with an alias name.
+* sheet_list: If you define an alias here, you can specify a sheet with an alias name. This setting is valid only for Google Spreadsheets.
 
 You can check the contents of configuration using `conf` sub command.
 

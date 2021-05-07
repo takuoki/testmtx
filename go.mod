@@ -9,6 +9,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/takuoki/clmconv v1.0.0
 	github.com/takuoki/gsheets v0.2.2
+	github.com/tealeg/xlsx v1.0.5
 	github.com/urfave/cli v1.20.0
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 )
