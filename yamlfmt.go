@@ -39,15 +39,11 @@ func YamlIndentStr(s string) YamlFormatOption {
 }
 
 func (f *YamlFormatter) fprint(w io.Writer, v value, cn casename, indent int) {
-	f.fprintWithBr(w, v, cn, indent, false)
-}
-
-func (f *YamlFormatter) fprintWithBr(w io.Writer, v value, cn casename, indent int, br bool) {
 	switch t := v.(type) {
 	case *vObject:
-		f.fprintObject(w, t, cn, indent, br)
+		f.fprintObject(w, t, cn, indent)
 	case *vArray:
-		f.fprintArray(w, t, cn, indent, br)
+		f.fprintArray(w, t, cn, indent)
 	case *vString:
 		f.fprintString(w, t, cn)
 	case *vNum:
@@ -57,43 +53,35 @@ func (f *YamlFormatter) fprintWithBr(w io.Writer, v value, cn casename, indent i
 	}
 }
 
-func (f *YamlFormatter) fprintObject(w io.Writer, v *vObject, cn casename, i int, br bool) {
+func (f *YamlFormatter) fprintObject(w io.Writer, v *vObject, cn casename, i int) {
 	if !v.isNil(cn) {
-		if br {
-			fmt.Fprintln(w)
-		}
 		for _, pn := range v.propertyNames {
 			if !v.properties[pn].isNil(cn) {
-				var idt string
-				if br || !v.firstProperty(cn, pn) {
-					idt = f.indents(i + 1)
+				idt := f.indents(i)
+				switch v.properties[pn].(type) {
+				case *vObject, *vArray:
+					fmt.Fprintf(w, "%s%s:\n", idt, pn)
+				case *vString, *vNum, *vBool:
+					fmt.Fprintf(w, "%s%s: ", idt, pn)
 				}
-				fmt.Fprintf(w, "%s%s: ", idt, pn)
-				f.fprintWithBr(w, v.properties[pn], cn, i+1, true)
-				if !v.lastProperty(cn, pn) {
-					fmt.Fprintln(w)
-				}
+				f.fprint(w, v.properties[pn], cn, i+1)
 			}
 		}
 	}
 }
 
-func (f *YamlFormatter) fprintArray(w io.Writer, v *vArray, cn casename, i int, br bool) {
+func (f *YamlFormatter) fprintArray(w io.Writer, v *vArray, cn casename, i int) {
 	if !v.isNil(cn) {
-		if br {
-			fmt.Fprintln(w)
-		}
-		for j, e := range v.elements {
+		for _, e := range v.elements {
 			if !e.isNil(cn) {
-				idt := ""
-				if br || !v.firstElement(cn, j) {
-					idt = f.indents(i + 1)
+				idt := f.indents(i)
+				switch e.(type) {
+				case *vObject, *vArray:
+					fmt.Fprintf(w, "%s-\n", idt)
+				case *vString, *vNum, *vBool:
+					fmt.Fprintf(w, "%s- ", idt)
 				}
-				fmt.Fprintf(w, "%s- ", idt)
-				f.fprintWithBr(w, e, cn, i+1, false)
-				if !v.lastElement(cn, j) {
-					fmt.Fprintln(w)
-				}
+				f.fprint(w, e, cn, i+1)
 			}
 		}
 	}
@@ -102,19 +90,19 @@ func (f *YamlFormatter) fprintArray(w io.Writer, v *vArray, cn casename, i int, 
 func (f *YamlFormatter) fprintString(w io.Writer, v *vString, cn casename) {
 	if !v.isNil(cn) {
 		s := strings.Replace(*v.values[cn], "\n", "\\n", -1)
-		fmt.Fprint(w, s)
+		fmt.Fprintln(w, s)
 	}
 }
 
 func (f *YamlFormatter) fprintNum(w io.Writer, v *vNum, cn casename) {
 	if !v.isNil(cn) {
-		fmt.Fprintf(w, "%s", *v.values[cn])
+		fmt.Fprintf(w, "%s\n", *v.values[cn])
 	}
 }
 
 func (f *YamlFormatter) fprintBool(w io.Writer, v *vBool, cn casename) {
 	if !v.isNil(cn) {
-		fmt.Fprintf(w, "%t", *v.values[cn])
+		fmt.Fprintf(w, "%t\n", *v.values[cn])
 	}
 }
 

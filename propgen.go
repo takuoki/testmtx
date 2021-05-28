@@ -16,8 +16,6 @@ import (
 var (
 	importMap       = map[string]string{}
 	enumPropertyMap = map[string]*enumProperty{}
-
-	repeated = 2 // overwritten by option
 )
 
 type enumProperty struct {
@@ -46,7 +44,7 @@ func NewPropGenerator(options ...PropGenOption) (*PropGenerator, error) {
 	p := PropGenerator{
 		w:           os.Stdout,
 		parser:      parser,
-		repeatCount: 3,
+		repeatCount: 2,
 	}
 	for _, opt := range options {
 		err := opt(&p)
@@ -202,7 +200,7 @@ func (g *PropGenerator) outObject(w io.Writer, t *ast.StructType, i int) error {
 func (g *PropGenerator) outArray(w io.Writer, t *ast.ArrayType, i int) error {
 	fmt.Fprintln(w, typeAry)
 
-	for j := 0; j < repeated; j++ {
+	for j := 0; j < g.repeatCount; j++ {
 		g.outTab(w, i+1)
 		fmt.Fprintf(w, "* %d", j)
 		g.outTab4Type(w, i+1)

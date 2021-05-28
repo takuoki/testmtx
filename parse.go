@@ -78,7 +78,7 @@ func PropLevel(level int) ParseOption {
 func (p *Parser) Parse(s sheets.Sheet, sheetName string) (*Sheet, error) {
 
 	if p == nil {
-		return nil, errors.New("Parser is not initilized")
+		return nil, errors.New("parser is not initilized")
 	}
 
 	if s.Value(p.caseRow, p.caseStartClm) == "" {
@@ -202,6 +202,7 @@ func (p *Parser) getValues(rows []sheets.Row, ri, l int, cases []casename) (valu
 	case typeStr:
 		v, err := p.getStringValues(rows[ri], ri, cases)
 		if err != nil {
+			// getStringValues never returns error
 			return nil, ri, err
 		}
 		val = &vString{
@@ -240,7 +241,7 @@ func (p *Parser) getObjAryValues(row sheets.Row, ri int, cases []casename) (map[
 		case strNew:
 			m[cases[i]] = true
 		default:
-			return nil, fmt.Errorf("unable to convert array value (value=\"%s\", row=%d", str, ri)
+			return nil, fmt.Errorf("unable to convert object or array value (value=\"%s\", row=%d", str, ri)
 		}
 	}
 
@@ -277,7 +278,7 @@ func (p *Parser) getNumValues(row sheets.Row, ri int, cases []casename) (map[cas
 		default:
 			_, err := strconv.ParseFloat(str, 64)
 			if err != nil {
-				return nil, fmt.Errorf("unable to convert int value (value=\"%s\", row=%d", str, ri)
+				return nil, fmt.Errorf("unable to convert numeric value (value=\"%s\", row=%d", str, ri)
 			}
 			m[cases[i]] = &str
 		}
