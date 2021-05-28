@@ -32,15 +32,6 @@ func (v *vObject) isNil(cc casename) bool {
 	return !v.values[cc]
 }
 
-func (v *vObject) firstProperty(cn casename, pn propname) bool {
-	for _, n := range v.propertyNames {
-		if !v.properties[pn].isNil(cn) {
-			return n == pn
-		}
-	}
-	return false
-}
-
 func (v *vObject) lastProperty(cn casename, pn propname) bool {
 	for i := len(v.propertyNames) - 1; i >= 0; i-- {
 		if !v.properties[v.propertyNames[i]].isNil(cn) {
@@ -59,28 +50,13 @@ func (v *vArray) isNil(cn casename) bool {
 	return !v.values[cn]
 }
 
-func (v *vArray) firstElement(cn casename, i int) bool {
-	if i > len(v.elements) || v.elements[i].isNil(cn) {
-		return false
-	}
-	for j := 0; j < i; j++ {
-		if !v.elements[j].isNil(cn) {
-			return false
-		}
-	}
-	return true
-}
-
 func (v *vArray) lastElement(cn casename, i int) bool {
-	if i > len(v.elements) || v.elements[i].isNil(cn) {
-		return false
-	}
-	for j := i + 1; j < len(v.elements); j++ {
+	for j := len(v.elements) - 1; j >= 0; j-- {
 		if !v.elements[j].isNil(cn) {
-			return false
+			return j == i
 		}
 	}
-	return true
+	return false
 }
 
 type vString struct {

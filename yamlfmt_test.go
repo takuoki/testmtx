@@ -12,49 +12,67 @@ func TestYamlFormatFprint(t *testing.T) {
 		data     [][]string
 		expected string
 	}{
-		// TODO: The current implementation cannot pass the test.
-		// "object": {
-		// 	data: [][]string{
-		// 		{"", "", "", "", "casename"},
-		// 		{"root", "", "", "object", "*new"},
-		// 		{"", "key1", "", "number", "1"},
-		// 		{"", "key2", "", "bool", "true"},
-		// 	},
-		// 	expected: "key1: 1\n  key2: true\n",
-		// },
-		// "array": {
-		// 	data: [][]string{
-		// 		{"", "", "", "", "casename"},
-		// 		{"root", "", "", "array", "*new"},
-		// 		{"", "*", "", "number", "1"},
-		// 		{"", "*", "", "bool", "true"},
-		// 	},
-		// 	expected: "  - 1\n  - true\n",
-		// },
+		"mix": {
+			data: [][]string{
+				{"", "", "", "", "", "casename"},
+				{"root", "", "", "", "object", "*new"},
+				{"", "key1", "", "", "number", "1"},
+				{"", "key2", "", "", "array", "*new"},
+				{"", "", "*", "", "bool", "true"},
+				{"", "", "*", "", "array", "*new"},
+				{"", "", "", "*", "string", "abc"},
+				{"", "", "", "*", "string", "xyz"},
+				{"", "key3", "", "", "array", "*new"},
+				{"", "", "*", "", "object", "*new"},
+				{"", "", "", "key3-1-1", "string", "abc"},
+				{"", "key4", "", "", "array", "*new"},
+				{"", "", "*", "", "string", ""},
+				{"", "", "*", "", "string", ""},
+			},
+			expected: "key1: 1\nkey2:\n  - true\n  -\n    - abc\n    - xyz\nkey3:\n  -\n    key3-1-1: abc\nkey4:\n",
+		},
+		"object": {
+			data: [][]string{
+				{"", "", "", "", "", "casename"},
+				{"root", "", "", "", "object", "*new"},
+				{"", "key1", "", "", "number", "1"},
+				{"", "key2", "", "", "bool", "true"},
+			},
+			expected: "key1: 1\nkey2: true\n",
+		},
+		"array": {
+			data: [][]string{
+				{"", "", "", "", "", "casename"},
+				{"root", "", "", "", "array", "*new"},
+				{"", "*", "", "", "number", "1"},
+				{"", "*", "", "", "bool", "true"},
+			},
+			expected: "- 1\n- true\n",
+		},
 		"string": {
 			data: [][]string{
-				{"", "", "", "", "casename"},
-				{"root", "", "", "string", "abc"},
+				{"", "", "", "", "", "casename"},
+				{"root", "", "", "", "string", "abc"},
 			},
-			expected: "abc",
+			expected: "abc\n",
 		},
 		"number": {
 			data: [][]string{
-				{"", "", "", "", "casename"},
-				{"root", "", "", "number", "1"},
+				{"", "", "", "", "", "casename"},
+				{"root", "", "", "", "number", "1"},
 			},
-			expected: "1",
+			expected: "1\n",
 		},
 		"bool": {
 			data: [][]string{
-				{"", "", "", "", "casename"},
-				{"root", "", "", "bool", "true"},
+				{"", "", "", "", "", "casename"},
+				{"root", "", "", "", "bool", "true"},
 			},
-			expected: "true",
+			expected: "true\n",
 		},
 	}
 
-	p, err := testmtx.NewParser(testmtx.PropLevel(3))
+	p, err := testmtx.NewParser(testmtx.PropLevel(4))
 	if err != nil {
 		t.Fatalf("unable to create new parser: %v", err)
 	}
@@ -69,7 +87,7 @@ func TestYamlFormatFprint(t *testing.T) {
 				t.Fatalf("fail to parse sheet: %v", err)
 			}
 			buf := &bytes.Buffer{}
-			f.Fprint(t, buf, s, 0)
+			f.Fprint(t, buf, s)
 			if buf.String() != c.expected {
 				t.Errorf("print string doesn't match expected (expected=%q, actual=%q)", c.expected, buf.String())
 			}
