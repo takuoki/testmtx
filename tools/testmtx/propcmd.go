@@ -18,7 +18,11 @@ func init() {
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "file, f",
-				Usage: "golang file in which the target type is defined (mandatory)",
+				Usage: "golang file in which the target type is defined",
+			},
+			cli.StringFlag{
+				Name:  "dir, d",
+				Usage: "directory containing golang file in which the target type is defined",
 			},
 			cli.StringFlag{
 				Name:  "type, t",
@@ -42,8 +46,12 @@ type prop struct{}
 
 func (p *prop) Run(c *cli.Context, _ *config) error {
 
-	if c.String("file") == "" {
-		return errors.New("please specify a file name")
+	if c.String("file") == "" && c.String("dir") == "" {
+		return errors.New("please specify a file name or directory name")
+	}
+
+	if c.String("file") != "" && c.String("dir") != "" {
+		return errors.New("do not specify both a file name and directory name")
 	}
 
 	if c.String("type") == "" {
@@ -58,8 +66,14 @@ func (p *prop) Run(c *cli.Context, _ *config) error {
 		return fmt.Errorf("unable to create generator: %w", err)
 	}
 
-	if err := pg.Generate(c.String("file"), c.String("type")); err != nil {
-		return fmt.Errorf("unable to generate a property list: %w", err)
+	if c.String("file") != "" {
+		if err := pg.Generate(c.String("file"), c.String("type")); err != nil {
+			return fmt.Errorf("unable to generate a property list: %w", err)
+		}
+	} else if c.String("dir") != "" {
+		if err := pg.GenerateDir(c.String("dir"), c.String("type")); err != nil {
+			return fmt.Errorf("unable to generate a property list: %w", err)
+		}
 	}
 
 	fmt.Println("\ncomplete!")
