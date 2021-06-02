@@ -1,5 +1,5 @@
 {
-  "except_sheet_names": [
+  "excluded_sheet_names": [
     "overview"
   ],
   "sheet_list": [

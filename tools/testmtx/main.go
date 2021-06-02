@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/urfave/cli"
 )
@@ -27,6 +28,10 @@ func main() {
 			Name:  "config, c",
 			Usage: "config file for testmtx",
 		},
+		cli.StringFlag{
+			Name:  "exclude, e",
+			Usage: "sheet name to exclude (comma separated)",
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -37,12 +42,16 @@ func main() {
 
 func action(c *cli.Context, sc subCmd) error {
 
-	conf := &config{}
+	conf := newConfig()
 	if c.GlobalString("config") != "" {
-		var err error
-		conf, err = readConfig(c.GlobalString("config"))
-		if err != nil {
+		if err := conf.readConfig(c.GlobalString("config")); err != nil {
 			return err
+		}
+	}
+	if c.GlobalString("exclude") != "" {
+		ss := strings.Split(c.GlobalString("exclude"), ",")
+		for _, s := range ss {
+			conf.addExcludedSheet(s)
 		}
 	}
 

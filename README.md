@@ -83,7 +83,7 @@ When using Microsoft Excel, create a sheet in the same format.
 
 Using `out` sub command, you can generate test data with your sheet.
 This tool creates test data for all sheets, and all test cases.
-If you want to ignore some sheets, use the except sheet name feature in configuration.
+If you want to ignore some sheets, use the excluded sheet name feature in configuration.
 For each sheet, this tool searches from the beginning of the test case name to the right and end when the test case name becomes blank.
 
 **Case: Google Spreadsheets**
@@ -192,7 +192,7 @@ When you want to use these functions, specify config file as command line argume
 
 ```json
 {
-  "except_sheet_names": [
+  "excluded_sheet_names": [
     "overview"
   ],
   "sheet_list": [
@@ -205,14 +205,14 @@ When you want to use these functions, specify config file as command line argume
 }
 ```
 
-* except_sheet_names: The sheets listed here are excluded from output.
+* excluded_sheet_names: The sheets listed here are excluded from output.
 * sheet_list: If you define an alias here, you can specify a sheet with an alias name. This setting is valid only for Google Spreadsheets.
 
 You can check the contents of configuration using `conf` sub command.
 
 ```bash
 $ testmtx -c config.json conf
-# Except Sheet Names
+# Excluded Sheet Names
 - overview
 
 # Sheet List

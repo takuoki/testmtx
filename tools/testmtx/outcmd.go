@@ -117,7 +117,7 @@ func (o *output) Run(c *cli.Context, conf *config) error {
 	}
 
 	for _, sheetName := range sheetNames {
-		if _, ok := conf.ExceptSheetSet[sheetName]; ok {
+		if _, ok := conf.ExcludedSheetSet[sheetName]; ok {
 			continue
 		}
 		s, err := d.GetSheet(sheetName)

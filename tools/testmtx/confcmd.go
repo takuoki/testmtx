@@ -30,8 +30,8 @@ func (c *conf) Run(ctx *cli.Context, conf *config) error {
 		return errors.New("please specify a configuration file")
 	}
 
-	fmt.Fprintln(c.w, "# Except Sheet Names")
-	for _, s := range conf.ExceptSheetNames {
+	fmt.Fprintln(c.w, "# Excluded Sheet Names")
+	for _, s := range conf.ExcludedSheetNames {
 		fmt.Fprintf(c.w, "- %s\n", s)
 	}
 
