@@ -34,7 +34,7 @@ Using `testmtx`, you can get advantages of **completeness**, **readability** and
 If you have a Go environment, you can install this tool using `go get`. Before installing, enable the Go module feature.
 
 ```bash
-go install github.com/takuoki/testmtx/tools/testmtx@v1.1.0
+go install github.com/takuoki/testmtx/tools/testmtx@v1.1.1
 ```
 
 If not, download it from [the release page](https://github.com/takuoki/testmtx/releases).
