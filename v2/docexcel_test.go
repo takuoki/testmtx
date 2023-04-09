@@ -24,7 +24,7 @@ func TestExcelDoc(t *testing.T) {
 	if !assert.Nil(t, err) {
 		assert.Fail(t, "fail to get sheet names")
 	}
-	assert.Equal(t, []string{"sample"}, sheetNames)
+	assert.Equal(t, []string{"sample", "custom"}, sheetNames)
 
 	// test sheet
 	_, err = doc.GetSheet("dummy")

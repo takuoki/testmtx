@@ -17,7 +17,7 @@ type Parser struct {
 	typeClm,
 	columnRow,
 	columnStart int
-	convertSimpleValueFuncs map[string]func(s string) (SimpleValue, error)
+	convertSimpleValueFuncs map[string]ConvertValueFunc
 }
 
 // NewParser creates a new Parser.
@@ -44,7 +44,7 @@ func NewParser(options ...ParseOption) (*Parser, error) {
 // ParseOption changes some parameters of the Parser.
 type ParseOption func(*Parser) error
 
-// PropLevel changes the property level on the spreadsheet.
+// PropLevel changes the property level on the sheet.
 func PropLevel(level int) ParseOption {
 	return func(p *Parser) error {
 		if level < 1 {
@@ -53,6 +53,19 @@ func PropLevel(level int) ParseOption {
 		p.propEndClm = p.propStartClm + level - 1
 		p.typeClm = p.propEndClm + 1
 		p.columnStart = p.typeClm + 1
+		return nil
+	}
+}
+
+// AdditionalSimpleValues adds simple values to default simple value list.
+func AdditionalSimpleValues(convertValueFuncs map[string]ConvertValueFunc) ParseOption {
+	return func(p *Parser) error {
+		for k, v := range convertValueFuncs {
+			if _, ok := p.convertSimpleValueFuncs[k]; ok {
+				return fmt.Errorf("type name %q is duplicated", k)
+			}
+			p.convertSimpleValueFuncs[k] = v
+		}
 		return nil
 	}
 }
@@ -113,20 +126,6 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 	}
 
 	return sh, nil
-}
-
-func (p *Parser) maxPropLevel() int {
-	return p.propEndClm - p.propStartClm + 1
-}
-
-func (p *Parser) propLevel(row DocRow) int {
-	for i := p.propStartClm; i <= p.propEndClm; i++ {
-		if row.Value(i) != "" {
-			return i - p.propStartClm + 1
-		}
-	}
-	// zero means no property title
-	return 0
 }
 
 func (p *Parser) getValues(rows []DocRow, ri, l int, cs []ColumnName) (Collection, int, error) {
@@ -207,4 +206,18 @@ func (p *Parser) getValueStrings(row DocRow, cs []ColumnName) []string {
 		values = append(values, row.Value(p.columnStart+i))
 	}
 	return values
+}
+
+func (p *Parser) maxPropLevel() int {
+	return p.propEndClm - p.propStartClm + 1
+}
+
+func (p *Parser) propLevel(row DocRow) int {
+	for i := p.propStartClm; i <= p.propEndClm; i++ {
+		if row.Value(i) != "" {
+			return i - p.propStartClm + 1
+		}
+	}
+	// zero means no property title
+	return 0
 }

@@ -5,8 +5,7 @@ import (
 	"io"
 )
 
-// JSONFormatter is a struct to format the sheet object as JSON.
-// Create it using NewJSONFormatter function.
+// JSONFormatter is a fommatter for JSON.
 type JSONFormatter struct {
 	formatter
 }
