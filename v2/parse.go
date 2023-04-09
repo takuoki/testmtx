@@ -58,18 +58,18 @@ func PropLevel(level int) ParseOption {
 }
 
 // Parse parses the sheet values to the sheet object.
-func (p *Parser) Parse(s DocSheet, sheetName string) (*Sheet, error) {
+func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 
 	if p == nil {
 		return nil, errors.New("parser is not initilized")
 	}
 
 	if s.Value(p.columnRow, p.columnStart) == "" {
-		return nil, fmt.Errorf("invalid sheet format (sheet=%s)", sheetName)
+		return nil, fmt.Errorf("invalid sheet format (sheet=%s)", s.Name())
 	}
 
 	sh := &Sheet{
-		Name:        sheetName,
+		Name:        s.Name(),
 		ColumnNames: []ColumnName{},
 		Collections: map[PropName]Collection{},
 	}
@@ -82,7 +82,7 @@ func (p *Parser) Parse(s DocSheet, sheetName string) (*Sheet, error) {
 		}
 		for _, n := range sh.ColumnNames {
 			if ColumnName(cn) == n {
-				return nil, fmt.Errorf("column name is duplicated (name=%s, sheet=%s)", cn, sheetName)
+				return nil, fmt.Errorf("column name is duplicated (name=%s, sheet=%s)", cn, s.Name())
 			}
 		}
 
@@ -96,18 +96,18 @@ func (p *Parser) Parse(s DocSheet, sheetName string) (*Sheet, error) {
 			continue
 		}
 		if p.propLevel(rows[ri]) > 1 {
-			return nil, fmt.Errorf("must not exist property that does not belong to the root property (row=%d, sheet=%s)", ri, sheetName)
+			return nil, fmt.Errorf("must not exist property that does not belong to the root property (row=%d, sheet=%s)", ri, s.Name())
 		}
 		pn := PropName(strings.Replace(rows[ri].Value(p.propStartClm), " ", "_", -1))
 		if _, ok := sh.Collections[pn]; ok {
-			return nil, fmt.Errorf("root property name is duplicated (row=%d, sheet=%s)", ri, sheetName)
+			return nil, fmt.Errorf("root property name is duplicated (row=%d, sheet=%s)", ri, s.Name())
 		}
 		var col Collection
 		var err error
 		col, ri, err = p.getValues(rows, ri, 1, sh.ColumnNames)
 		if err != nil {
 			// TODO: エラーの返し方
-			return nil, fmt.Errorf("%v, sheet=%s)", err, sheetName)
+			return nil, fmt.Errorf("%v, sheet=%s)", err, s.Name())
 		}
 		sh.Collections[pn] = col
 	}

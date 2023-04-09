@@ -1,7 +1,6 @@
 package testmtx
 
-// TODO: publicである必要があるか
-
+// Doc is a simple document interface.
 type Doc interface {
 	GetSheetNames() ([]string, error)
 	GetSheet(sheetName string) (DocSheet, error)
@@ -9,11 +8,13 @@ type Doc interface {
 
 // DocSheet is a simple sheet interface.
 type DocSheet interface {
+	Name() string
 	Rows() []DocRow
 	Value(row, clm int) string
 }
 
 // DocRow is a simple row interface.
 type DocRow interface {
+	Number() int
 	Value(clm int) string
 }
