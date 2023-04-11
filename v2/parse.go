@@ -71,14 +71,14 @@ func AdditionalSimpleValues(convertValueFuncs map[string]ConvertValueFunc) Parse
 }
 
 // Parse parses the sheet values to the sheet object.
+// TODO: ParseErrorが返されることを明記し、ハンドリングが必要な旨をコメントする。
 func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 
-	if p == nil {
-		return nil, errors.New("parser is not initilized")
-	}
-
 	if s.Value(p.columnRow, p.columnStart) == "" {
-		return nil, fmt.Errorf("invalid sheet format (sheet=%s)", s.Name())
+		return nil, &ParseError{
+			msg:   "invalid sheet format",
+			sheet: pointer(s.Name()),
+		}
 	}
 
 	sh := &Sheet{
@@ -86,6 +86,8 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 		ColumnNames: []ColumnName{},
 		Collections: map[PropName]Collection{},
 	}
+
+	rows := s.Rows()
 
 	// columns
 	for ci := p.columnStart; ; ci++ {
@@ -95,7 +97,12 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 		}
 		for _, n := range sh.ColumnNames {
 			if ColumnName(cn) == n {
-				return nil, fmt.Errorf("column name is duplicated (name=%s, sheet=%s)", cn, s.Name())
+				return nil, &ParseError{
+					msg:       fmt.Sprintf("column name (%q) is duplicated", cn),
+					sheet:     pointer(s.Name()),
+					rowNumber: pointer(rows[p.columnRow].Number()),
+					clmNumber: pointer(ci),
+				}
 			}
 		}
 
@@ -103,24 +110,37 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 	}
 
 	// properties
-	rows := s.Rows()
 	for ri := p.dataStartRow; ri < len(rows); ri++ {
 		if p.propLevel(rows[ri]) < 1 {
 			continue
 		}
-		if p.propLevel(rows[ri]) > 1 {
-			return nil, fmt.Errorf("must not exist property that does not belong to the root property (row=%d, sheet=%s)", ri, s.Name())
+		if lv := p.propLevel(rows[ri]); lv > 1 {
+			return nil, &ParseError{
+				msg:       "must not exist property that does not belong to the root property",
+				sheet:     pointer(s.Name()),
+				rowNumber: pointer(rows[ri].Number()),
+				clmNumber: pointer(lv + p.propStartClm - 1), // TODO: 要テスト
+			}
 		}
 		pn := PropName(strings.Replace(rows[ri].Value(p.propStartClm), " ", "_", -1))
 		if _, ok := sh.Collections[pn]; ok {
-			return nil, fmt.Errorf("root property name is duplicated (row=%d, sheet=%s)", ri, s.Name())
+			return nil, &ParseError{
+				msg:       fmt.Sprintf("root property name (%q) is duplicated", pn),
+				sheet:     pointer(s.Name()),
+				rowNumber: pointer(rows[ri].Number()),
+				clmNumber: pointer(p.propStartClm),
+			}
 		}
 		var col Collection
 		var err error
-		col, ri, err = p.getValues(rows, ri, 1, sh.ColumnNames)
+		col, ri, err = p.parseCollection(rows, ri, 1, sh.ColumnNames)
 		if err != nil {
-			// TODO: エラーの返し方
-			return nil, fmt.Errorf("%v, sheet=%s)", err, s.Name())
+			return nil, &ParseError{
+				msg:       "fail to parse root property",
+				sheet:     pointer(s.Name()),
+				rowNumber: pointer(rows[ri].Number()),
+				err:       err,
+			}
 		}
 		sh.Collections[pn] = col
 	}
@@ -128,76 +148,197 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 	return sh, nil
 }
 
-func (p *Parser) getValues(rows []DocRow, ri, l int, cs []ColumnName) (Collection, int, error) {
+func (p *Parser) parseCollection(rows []DocRow, ri, level int, cs []ColumnName) (Collection, int, error) {
 
 	var col Collection
 	var err error
 	switch typ := rows[ri].Value(p.typeClm); typ {
 	case typeObject:
-		vs := p.getValueStrings(rows[ri], cs)
-
-		pNames := []PropName{}
-		ps := map[PropName]Collection{}
-		for ri = ri + 1; ri < len(rows); ri++ {
-			if lv := p.propLevel(rows[ri]); lv < l+1 {
-				ri--
-				break
-			} else if lv > l+1 {
-				// TODO: エラーの返し方（行番号でのラップが必要）
-				return nil, 0, fmt.Errorf("invalid level of object child (row=%d", ri)
-			}
-			pn := PropName(rows[ri].Value(p.propStartClm + l))
-			pNames = append(pNames, pn)
-			ps[pn], ri, err = p.getValues(rows, ri, l+1, cs)
-			if err != nil {
-				// TODO: エラーの返し方（行番号でのラップが必要）
-				return nil, 0, err
-			}
-		}
-
-		col, err = newObjectCollection(cs, vs, pNames, ps)
+		col, ri, err = p.parseObjectCollection(rows, ri, level, cs)
 		if err != nil {
-			return nil, 0, fmt.Errorf("error occurred (row=%d): %w", ri, err)
+			return nil, 0, &ParseError{
+				msg:       "fail to create object collection",
+				rowNumber: pointer(rows[ri].Number()),
+				err:       err,
+			}
 		}
 	case typeArray:
-		vs := p.getValueStrings(rows[ri], cs)
-
-		es := []Collection{}
-		for ri = ri + 1; ri < len(rows); ri++ {
-			if lv := p.propLevel(rows[ri]); lv < l+1 {
-				ri--
-				break
-			} else if lv > l+1 {
-				// TODO: エラーの返し方（行番号でのラップが必要）
-				return nil, 0, fmt.Errorf("invalid level of array child (row=%d", ri)
-			}
-			var tmpV Collection
-			tmpV, ri, err = p.getValues(rows, ri, l+1, cs)
-			if err != nil {
-				// TODO: エラーの返し方（行番号でのラップが必要）
-				return nil, 0, err
-			}
-			es = append(es, tmpV)
-		}
-
-		col, err = newArrayCollection(cs, vs, es)
+		col, ri, err = p.parseArrayCollection(rows, ri, level, cs)
 		if err != nil {
-			return nil, 0, fmt.Errorf("error occurred (row=%d): %w", ri, err)
+			return nil, 0, &ParseError{
+				msg:       "fail to create array collection",
+				rowNumber: pointer(rows[ri].Number()),
+				err:       err,
+			}
 		}
 	default:
 		convertFunc, ok := p.convertSimpleValueFuncs[typ]
 		if !ok {
-			// TODO: エラーの返し方（行番号でのラップが必要）
-			return nil, ri, fmt.Errorf("invalid type (type=\"%s\", row=%d", rows[ri].Value(p.typeClm), ri)
+			return nil, 0, &ParseError{
+				msg:       fmt.Sprintf("invalid type (type=%q)", rows[ri].Value(p.typeClm)),
+				rowNumber: pointer(rows[ri].Number()),
+			}
 		}
 
-		col, err = newSimpleCollection(cs, p.getValueStrings(rows[ri], cs), convertFunc)
+		col, err = p.parseSimpleCollection(rows[ri], cs, convertFunc)
 		if err != nil {
-			return nil, 0, fmt.Errorf("error occurred (row=%d): %w", ri, err)
+			return nil, 0, &ParseError{
+				msg:       fmt.Sprintf("fail to parse simple collection (type=%q)", typ),
+				rowNumber: pointer(rows[ri].Number()),
+				err:       err,
+			}
 		}
 	}
 
 	return col, ri, nil
+}
+
+func (p *Parser) parseObjectCollection(rows []DocRow, ri, level int, cs []ColumnName) (*ObjectCollection, int, error) {
+
+	implicitNils := map[ColumnName]bool{}
+	explicitNils := map[ColumnName]bool{}
+
+	for i := 0; i < len(cs); i++ {
+		switch s := rows[ri].Value(p.columnStart + i); s {
+		case "":
+			implicitNils[cs[i]] = true
+		case strNull:
+			explicitNils[cs[i]] = true
+		case strNew:
+			// do nothing
+		default:
+			return nil, 0, &ParseError{
+				msg:       fmt.Sprintf("invalid object value (%q)", s),
+				rowNumber: pointer(rows[ri].Number()),
+				clmNumber: pointer(0), // TODO
+			}
+		}
+	}
+
+	pNames := []PropName{}
+	ps := map[PropName]Collection{}
+	for ri = ri + 1; ri < len(rows); ri++ {
+
+		if lv := p.propLevel(rows[ri]); lv < level+1 {
+			ri--
+			break
+		} else if lv > level+1 {
+			return nil, 0, &ParseError{
+				msg:       "invalid level of object property",
+				rowNumber: pointer(rows[ri].Number()),
+				clmNumber: pointer(0), // TODO
+			}
+		}
+
+		pn := PropName(rows[ri].Value(p.propStartClm + level))
+		pNames = append(pNames, pn)
+
+		var err error
+		ps[pn], ri, err = p.parseCollection(rows, ri, level+1, cs)
+		if err != nil {
+			return nil, 0, &ParseError{
+				msg:       "error occurred in object property",
+				rowNumber: pointer(rows[ri].Number()),
+				err:       err,
+			}
+		}
+	}
+
+	return &ObjectCollection{
+		ImplicitNils:  implicitNils,
+		ExplicitNils:  explicitNils,
+		PropertyNames: pNames,
+		Properties:    ps,
+	}, ri, nil
+}
+
+func (p *Parser) parseArrayCollection(rows []DocRow, ri, level int, cs []ColumnName) (*ArrayCollection, int, error) {
+
+	implicitNils := map[ColumnName]bool{}
+	explicitNils := map[ColumnName]bool{}
+
+	for i := 0; i < len(cs); i++ {
+		switch s := rows[ri].Value(p.columnStart + i); s {
+		case "":
+			implicitNils[cs[i]] = true
+		case strNull:
+			explicitNils[cs[i]] = true
+		case strNew:
+			// do nothing
+		default:
+			return nil, 0, &ParseError{
+				msg:       fmt.Sprintf("invalid array value (%q)", s),
+				rowNumber: pointer(rows[ri].Number()),
+				clmNumber: pointer(0), // TODO
+			}
+		}
+	}
+
+	es := []Collection{}
+	for ri = ri + 1; ri < len(rows); ri++ {
+
+		if lv := p.propLevel(rows[ri]); lv < level+1 {
+			ri--
+			break
+		} else if lv > level+1 {
+			return nil, 0, &ParseError{
+				msg:       "invalid level of array element",
+				rowNumber: pointer(rows[ri].Number()),
+				clmNumber: pointer(0), // TODO
+			}
+		}
+
+		var e Collection
+		var err error
+		e, ri, err = p.parseCollection(rows, ri, level+1, cs)
+		if err != nil {
+			return nil, 0, &ParseError{
+				msg:       "error occurred in array element",
+				rowNumber: pointer(rows[ri].Number()),
+				err:       err,
+			}
+		}
+		es = append(es, e)
+	}
+
+	return &ArrayCollection{
+		ImplicitNils: implicitNils,
+		ExplicitNils: explicitNils,
+		Elements:     es,
+	}, ri, nil
+}
+
+func (p *Parser) parseSimpleCollection(row DocRow, cs []ColumnName, fn ConvertValueFunc) (*SimpleCollection, error) {
+
+	implicitNils := map[ColumnName]bool{}
+	explicitNils := map[ColumnName]bool{}
+	values := map[ColumnName]SimpleValue{}
+
+	for i := 0; i < len(cs); i++ {
+		switch s := row.Value(p.columnStart + i); s {
+		case "":
+			implicitNils[cs[i]] = true
+		case strNull:
+			explicitNils[cs[i]] = true
+		default:
+			v, err := fn(s)
+			if err != nil {
+				return nil, &ParseError{
+					msg:       "fail to convert simple value",
+					rowNumber: pointer(row.Number()),
+					clmNumber: pointer(p.columnStart + i),
+					err:       err,
+				}
+			}
+			values[cs[i]] = v
+		}
+	}
+
+	return &SimpleCollection{
+		ImplicitNils: implicitNils,
+		ExplicitNils: explicitNils,
+		Values:       values,
+	}, nil
 }
 
 func (p *Parser) getValueStrings(row DocRow, cs []ColumnName) []string {
@@ -220,4 +361,34 @@ func (p *Parser) propLevel(row DocRow) int {
 	}
 	// zero means no property title
 	return 0
+}
+
+func pointer[T any](v T) *T {
+	v2 := v
+	return &v2
+}
+
+// TODO: コメント
+type ParseError struct {
+	msg       string
+	sheet     *string
+	rowNumber *int
+	clmNumber *int
+	err       error
+}
+
+// TODO: 一番最初のエラーメッセージに、シート名、セル番号を付与したものを返す
+// 取得できないデータは出力しない
+// riは一番深い値？一番浅い値？それとも全部同じになる？
+func (e *ParseError) Error() string {
+	return e.msg
+}
+
+// TODO: メッセージをラップ形式ですべて連結したエラーメッセージに、シート名、セル番号を付与したものを返す
+func (e *ParseError) DetailError() string {
+	return e.msg
+}
+
+func (e *ParseError) Unwrap() error {
+	return e.err
 }
