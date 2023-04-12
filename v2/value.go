@@ -48,7 +48,7 @@ type numberValue struct {
 func convertNumberValue(s string) (SimpleValue, error) {
 	_, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid number value (%q)", s)
 	}
 	return &numberValue{v: s}, nil
 }
