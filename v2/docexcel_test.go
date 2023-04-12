@@ -8,6 +8,7 @@ import (
 )
 
 func TestExcelDoc(t *testing.T) {
+	t.Parallel()
 
 	// test doc
 	_, err := testmtx.NewExcelDoc("testdata/dummy.xlsx")

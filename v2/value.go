@@ -22,27 +22,27 @@ var defaultConvertSimpleValueFuncs = map[string]ConvertValueFunc{
 	typeBool:   convertBoolValue,
 }
 
-type stringValue struct {
-	v string
+type StringValue struct {
+	Value string
 }
 
 func convertStringValue(s string) (SimpleValue, error) {
 	if s == strEmpty {
-		return &stringValue{v: ""}, nil
+		return &StringValue{Value: ""}, nil
 	}
-	return &stringValue{v: s}, nil
+	return &StringValue{Value: s}, nil
 }
 
-func (v *stringValue) StringJSON() string {
-	return fmt.Sprintf("%q", strings.Replace(v.v, "\n", "\\n", -1))
+func (v *StringValue) StringJSON() string {
+	return fmt.Sprintf("%q", strings.Replace(v.Value, "\n", "\\n", -1))
 }
 
-func (v *stringValue) StringYAML() string {
-	return strings.Replace(v.v, "\n", "\\n", -1)
+func (v *StringValue) StringYAML() string {
+	return strings.Replace(v.Value, "\n", "\\n", -1)
 }
 
-type numberValue struct {
-	v string
+type NumberValue struct {
+	Value string
 }
 
 func convertNumberValue(s string) (SimpleValue, error) {
@@ -50,36 +50,36 @@ func convertNumberValue(s string) (SimpleValue, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid number value (%q)", s)
 	}
-	return &numberValue{v: s}, nil
+	return &NumberValue{Value: s}, nil
 }
 
-func (v *numberValue) StringJSON() string {
-	return v.v
+func (v *NumberValue) StringJSON() string {
+	return v.Value
 }
 
-func (v *numberValue) StringYAML() string {
-	return v.v
+func (v *NumberValue) StringYAML() string {
+	return v.Value
 }
 
-type boolValue struct {
-	v bool
+type BoolValue struct {
+	Value bool
 }
 
 func convertBoolValue(s string) (SimpleValue, error) {
 	switch s {
 	case "true", "TRUE", "True":
-		return &boolValue{v: true}, nil
+		return &BoolValue{Value: true}, nil
 	case "false", "FALSE", "False":
-		return &boolValue{v: false}, nil
+		return &BoolValue{Value: false}, nil
 	default:
 		return nil, fmt.Errorf("invalid bool value (%q)", s)
 	}
 }
 
-func (v *boolValue) StringJSON() string {
-	return fmt.Sprintf("%t", v.v)
+func (v *BoolValue) StringJSON() string {
+	return fmt.Sprintf("%t", v.Value)
 }
 
-func (v *boolValue) StringYAML() string {
-	return fmt.Sprintf("%t", v.v)
+func (v *BoolValue) StringYAML() string {
+	return fmt.Sprintf("%t", v.Value)
 }
