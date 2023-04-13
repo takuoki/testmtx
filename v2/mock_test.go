@@ -41,8 +41,24 @@ func newMockSheet(name string, rows [][]string) *mockDocSheet {
 func (s *mockDocSheet) modify(clmLetter string, rowNumber int, value string) *mockDocSheet {
 	clm := clmconv.MustAtoi(clmLetter)
 	row := rowNumber - 1
-	if row < len(s.rows) && clm < len(s.rows[row]) {
-		s.rows[row][clm] = value
+	if row < len(s.rows) {
+		if clm < len(s.rows[row]) {
+			s.rows[row][clm] = value
+		} else {
+			cnt := clm - len(s.rows[row])
+			for i := 0; i < cnt; i++ {
+				s.rows[row] = append(s.rows[row], "")
+			}
+			s.rows[row] = append(s.rows[row], value)
+		}
+	} else {
+		cnt := row - len(s.rows)
+		for i := 0; i < cnt; i++ {
+			s.rows = append(s.rows, []string{})
+		}
+		r := make([]string, clm+1)
+		r[clm] = value
+		s.rows = append(s.rows, r)
 	}
 	return s
 }

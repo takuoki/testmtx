@@ -1,6 +1,12 @@
 package testmtx_test
 
-import "github.com/takuoki/testmtx/v2"
+import (
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/takuoki/testmtx/v2"
+)
 
 // propLevel = 5
 func sampleDocSheet() *mockDocSheet {
@@ -14,7 +20,7 @@ func sampleDocSheet() *mockDocSheet {
 		{"", "", "bool_key", "", "", "", "bool", "true", "", "false", "*null"},
 		{"", "", "object_key", "", "", "", "object", "*new", "*new", "", "*null"},
 		{"", "", "", "key1", "", "", "number", "201", "202", "", ""},
-		{"", "", "", "key2", "", "", "string", "string value 201", "string value 202", "", ""},
+		{"", "", "", "key2", "", "", "string", "string value 201", "*empty", "", ""},
 		{"", "", "array_key", "", "", "", "array", "*new", "", "*new", "*null"},
 		{"", "", "", "* 0", "", "", "object", "*new", "", "*new", ""},
 		{"", "", "", "", "key3", "", "number", "301", "", "303", ""},
@@ -22,7 +28,8 @@ func sampleDocSheet() *mockDocSheet {
 		{"", "", "", "* 1", "", "", "object", "*new", "", "", ""},
 		{"", "", "", "", "key3", "", "number", "401", "", "", ""},
 		{"", "", "", "", "key4", "", "string", "string value 401", "", "", ""},
-		{"", "", "", "", "", "", "", "", "", "", ""},
+		{},
+		{},
 		{"", "want", "", "", "", "", "object", "*new", "*new", "*new", "*new"},
 		{"", "", "status", "", "", "", "string", "success", "failure", "failure", "failure"},
 		{"", "", "code", "", "", "", "number", "200", "401", "404", "500"},
@@ -102,7 +109,7 @@ func sampleParsedSheet() *testmtx.Sheet {
 								ExplicitNils: map[testmtx.ColumnName]bool{},
 								Values: map[testmtx.ColumnName]testmtx.SimpleValue{
 									"case1": &testmtx.StringValue{Value: "string value 201"},
-									"case2": &testmtx.StringValue{Value: "string value 202"},
+									"case2": &testmtx.StringValue{Value: ""},
 								},
 							},
 						},
@@ -213,4 +220,27 @@ func sampleParsedSheet() *testmtx.Sheet {
 			},
 		},
 	}
+}
+
+type unixtimeValue struct {
+	Value string
+}
+
+func convertUnixtimeValue(s string) (testmtx.SimpleValue, error) {
+	const timeFormat = "2006-01-02 15:04:05"
+
+	t, err := time.Parse(timeFormat, s)
+	if err != nil {
+		return nil, fmt.Errorf("invalid unixtime value (%q)", s)
+	}
+	ut := strconv.FormatInt(t.Unix(), 10)
+	return &unixtimeValue{Value: ut}, nil
+}
+
+func (v *unixtimeValue) StringJSON() string {
+	return fmt.Sprintf("%q", v.Value)
+}
+
+func (v *unixtimeValue) StringYAML() string {
+	return v.Value
 }
