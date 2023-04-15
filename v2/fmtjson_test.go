@@ -13,7 +13,7 @@ import (
 func TestJSONFormatter_Write(t *testing.T) {
 	t.Parallel()
 
-	testcases := map[string]struct {
+	cases := map[string]struct {
 		col  testmtx.Collection
 		cn   testmtx.ColumnName
 		want string
@@ -65,27 +65,26 @@ func TestJSONFormatter_Write(t *testing.T) {
 		t.Fatalf("fail to create formatter: %v", err)
 	}
 
-	for name, tc := range testcases {
-		name := name
-		tc := tc
+	for name, tt := range cases {
+		name, tt := name, tt
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			file, err := os.Open(tc.want)
+			file, err := os.Open(tt.want)
 			if err != nil {
-				t.Fatalf("fail to open file (%q): %v", tc.want, err)
+				t.Fatalf("fail to open file (%q): %v", tt.want, err)
 			}
 			defer file.Close()
 
 			wantStr, err := io.ReadAll(file)
 			if err != nil {
-				t.Fatalf("fail to read file (%q): %v", tc.want, err)
+				t.Fatalf("fail to read file (%q): %v", tt.want, err)
 			}
 
-			buf := &bytes.Buffer{}
-			f.Write(buf, tc.col, tc.cn)
+			got := &bytes.Buffer{}
+			f.Write(got, tt.col, tt.cn)
 
-			assert.Equal(t, string(wantStr), buf.String())
+			assert.Equal(t, string(wantStr), got.String())
 		})
 	}
 }

@@ -11,7 +11,7 @@ import (
 func TestParser_Parse(t *testing.T) {
 	t.Parallel()
 
-	testcases := map[string]struct {
+	cases := map[string]struct {
 		sheet   testmtx.DocSheet
 		want    *testmtx.Sheet
 		wantErr string
@@ -96,23 +96,22 @@ func TestParser_Parse(t *testing.T) {
 		t.Fatalf("fail to create parser: %v", err)
 	}
 
-	for name, tc := range testcases {
-		name := name
-		tc := tc
+	for name, tt := range cases {
+		name, tt := name, tt
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			res, err := parser.Parse(tc.sheet)
+			got, err := parser.Parse(tt.sheet)
 
-			if tc.wantErr == "" {
+			if tt.wantErr == "" {
 				if assert.Nil(t, err) {
-					assert.Equal(t, tc.want, res)
+					assert.Equal(t, tt.want, got)
 				} else {
 					fmt.Println(err.Error())
 				}
 			} else {
 				if assert.NotNil(t, err) {
-					assert.Equal(t, tc.wantErr, err.Error())
+					assert.Equal(t, tt.wantErr, err.Error())
 				}
 			}
 		})
