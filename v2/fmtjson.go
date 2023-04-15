@@ -36,7 +36,11 @@ func JSONIndentStr(s string) JSONFormatOption {
 	}
 }
 
-func (f *JSONFormatter) Write(w io.Writer, col Collection, cn ColumnName, indent int) {
+func (f *JSONFormatter) Write(w io.Writer, col Collection, cn ColumnName) {
+	f.write(w, col, cn, 0)
+}
+
+func (f *JSONFormatter) write(w io.Writer, col Collection, cn ColumnName, indent int) {
 	switch c := col.(type) {
 	case *ObjectCollection:
 		f.writeObject(w, c, cn, indent)
@@ -51,7 +55,7 @@ func (f *JSONFormatter) writeObject(w io.Writer, col *ObjectCollection, cn Colum
 	if col.ImplicitNil(cn) {
 		// do nothing
 	} else if col.ExplicitNil(cn) {
-		fmt.Fprint(w, "null")
+		fmt.Fprint(w, "null") // pass only if the root is null
 	} else {
 		fmt.Fprintln(w, "{")
 		for _, pn := range col.PropertyNames {
@@ -62,7 +66,7 @@ func (f *JSONFormatter) writeObject(w io.Writer, col *ObjectCollection, cn Colum
 				if col.Properties[pn].ExplicitNil(cn) {
 					fmt.Fprint(w, "null")
 				} else {
-					f.Write(w, col.Properties[pn], cn, indent+1)
+					f.write(w, col.Properties[pn], cn, indent+1)
 				}
 				if !col.LastProperty(cn, pn) {
 					fmt.Fprintln(w, ",")
@@ -79,7 +83,7 @@ func (f *JSONFormatter) writeArray(w io.Writer, col *ArrayCollection, cn ColumnN
 	if col.ImplicitNil(cn) {
 		// do nothing
 	} else if col.ExplicitNil(cn) {
-		fmt.Fprint(w, "null")
+		fmt.Fprint(w, "null") // pass only if the root is null
 	} else {
 		fmt.Fprintln(w, "[")
 		for i, e := range col.Elements {
@@ -90,7 +94,7 @@ func (f *JSONFormatter) writeArray(w io.Writer, col *ArrayCollection, cn ColumnN
 				if e.ExplicitNil(cn) {
 					fmt.Fprint(w, "null")
 				} else {
-					f.Write(w, e, cn, indent+1)
+					f.write(w, e, cn, indent+1)
 				}
 				if !col.LastElement(cn, i) {
 					fmt.Fprintln(w, ",")
@@ -107,7 +111,7 @@ func (f *JSONFormatter) writeSimple(w io.Writer, col *SimpleCollection, cn Colum
 	if col.ImplicitNil(cn) {
 		// do nothing
 	} else if col.ExplicitNil(cn) {
-		fmt.Fprint(w, "null")
+		fmt.Fprint(w, "null") // pass only if the root is null
 	} else {
 		fmt.Fprint(w, col.Values[cn].StringJSON())
 	}

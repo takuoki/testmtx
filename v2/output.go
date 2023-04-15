@@ -42,7 +42,7 @@ func (o *oneColumnOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 				}()
 
 				buf := &bytes.Buffer{}
-				o.formatter.Write(buf, col, cn, 0)
+				o.formatter.Write(buf, col, cn)
 				if buf.String() == "" {
 					return nil
 				}
@@ -104,7 +104,7 @@ func (o *oneSheetOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 				}()
 
 				buf := &bytes.Buffer{}
-				o.formatter.Write(buf, col, cn, 0)
+				o.formatter.Write(buf, col, cn)
 				if buf.String() == "" {
 					return nil
 				}

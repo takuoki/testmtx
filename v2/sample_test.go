@@ -16,7 +16,7 @@ func sampleDocSheet() *mockDocSheet {
 		{"", "Properties", "", "", "", "", "Type", "case1", "case2", "case3", "case4"},
 		{"", "in", "", "", "", "", "object", "*new", "*new", "*new", "*new"},
 		{"", "", "num_key", "", "", "", "number", "101", "102", "103", "*null"},
-		{"", "", "string_key", "", "", "", "string", "string value 101", "string value 201", "", "*null"},
+		{"", "", "string_key", "", "", "", "string", "string value 101", "string value 201\nmultiline", "", "*null"},
 		{"", "", "bool_key", "", "", "", "bool", "true", "", "false", "*null"},
 		{"", "", "object_key", "", "", "", "object", "*new", "*new", "", "*null"},
 		{"", "", "", "key1", "", "", "number", "201", "202", "", ""},
@@ -24,7 +24,7 @@ func sampleDocSheet() *mockDocSheet {
 		{"", "", "array_key", "", "", "", "array", "*new", "", "*new", "*null"},
 		{"", "", "", "* 0", "", "", "object", "*new", "", "*new", ""},
 		{"", "", "", "", "key3", "", "number", "301", "", "303", ""},
-		{"", "", "", "", "key4", "", "string", "string value 301", "", "string value 303", ""},
+		{"", "", "", "", "key4", "", "string", "string value 301", "", "string value \"303\"", ""},
 		{"", "", "", "* 1", "", "", "object", "*new", "", "", ""},
 		{"", "", "", "", "key3", "", "number", "401", "", "", ""},
 		{"", "", "", "", "key4", "", "string", "string value 401", "", "", ""},
@@ -66,7 +66,7 @@ func sampleParsedSheet() *testmtx.Sheet {
 						},
 						Values: map[testmtx.ColumnName]testmtx.SimpleValue{
 							"case1": &testmtx.StringValue{Value: "string value 101"},
-							"case2": &testmtx.StringValue{Value: "string value 201"},
+							"case2": &testmtx.StringValue{Value: "string value 201\nmultiline"},
 						},
 					},
 					"bool_key": &testmtx.SimpleCollection{
@@ -149,7 +149,7 @@ func sampleParsedSheet() *testmtx.Sheet {
 										ExplicitNils: map[testmtx.ColumnName]bool{},
 										Values: map[testmtx.ColumnName]testmtx.SimpleValue{
 											"case1": &testmtx.StringValue{Value: "string value 301"},
-											"case3": &testmtx.StringValue{Value: "string value 303"},
+											"case3": &testmtx.StringValue{Value: "string value \"303\""},
 										},
 									},
 								},

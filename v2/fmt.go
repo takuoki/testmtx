@@ -8,7 +8,7 @@ import (
 // Formatter is an interface for formatting.
 // This interface has private methods, so cannot create an original formatter outside of this package.
 type Formatter interface {
-	Write(w io.Writer, col Collection, cn ColumnName, indent int)
+	Write(w io.Writer, col Collection, cn ColumnName)
 	Extension() string
 }
 

@@ -34,7 +34,7 @@ func convertStringValue(s string) (SimpleValue, error) {
 }
 
 func (v *StringValue) StringJSON() string {
-	return fmt.Sprintf("%q", strings.Replace(v.Value, "\n", "\\n", -1))
+	return fmt.Sprintf("%q", v.Value)
 }
 
 func (v *StringValue) StringYAML() string {

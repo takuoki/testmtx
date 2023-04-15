@@ -1,0 +1,8 @@
+{
+  "num_key": 102,
+  "string_key": "string value 201\nmultiline",
+  "object_key": {
+    "key1": 202,
+    "key2": ""
+  }
+}
