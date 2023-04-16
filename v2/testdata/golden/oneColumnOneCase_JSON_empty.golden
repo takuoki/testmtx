@@ -1,0 +1,63 @@
+-- sample/case1/in.json --
+{
+  "num_key": 101,
+  "string_key": "string value 101",
+  "bool_key": true,
+  "object_key": {
+    "key1": 201,
+    "key2": "string value 201"
+  },
+  "array_key": [
+    {
+      "key3": 301,
+      "key4": "string value 301"
+    },
+    {
+      "key3": 401,
+      "key4": "string value 401"
+    }
+  ]
+}
+-- sample/case1/want.json --
+{
+  "status": "success",
+  "code": 200
+}
+-- sample/case2/in.json --
+{
+  "num_key": 102,
+  "string_key": "string value 201\nmultiline",
+  "object_key": {
+    "key1": 202,
+    "key2": ""
+  }
+}
+-- sample/case2/want.json --
+{
+  "status": "failure",
+  "code": 401
+}
+-- sample/case3/in.json --
+{
+  "num_key": 103,
+  "bool_key": false,
+  "array_key": [
+    {
+      "key3": 303,
+      "key4": "string value \"303\""
+    }
+  ]
+}
+-- sample/case3/want.json --
+{
+  "status": "failure",
+  "code": 404
+}
+-- sample/case4/in.json --
+{
+  "num_key": null,
+  "string_key": null,
+  "bool_key": null,
+  "object_key": null,
+  "array_key": null
+}

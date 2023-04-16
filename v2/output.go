@@ -48,7 +48,7 @@ func (o *oneColumnOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 				}
 
 				dir := filepath.Join(baseDir, sheet.Name, string(cn))
-				if err := os.MkdirAll(dir, 0777); err != nil {
+				if err := os.MkdirAll(dir, 0700); err != nil {
 					return fmt.Errorf("fail to create directory: %w", err)
 				}
 
@@ -90,7 +90,7 @@ func (o *oneSheetOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 
 	for propName, col := range sheet.Collections {
 		dir := filepath.Join(baseDir, sheet.Name, string(propName))
-		if err := os.MkdirAll(dir, 0777); err != nil {
+		if err := os.MkdirAll(dir, 0700); err != nil {
 			return fmt.Errorf("fail to create directory: %w", err)
 		}
 		eg := &errgroup.Group{}
