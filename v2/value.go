@@ -3,7 +3,6 @@ package testmtx
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 // TODO: コメント
@@ -38,7 +37,7 @@ func (v *StringValue) StringJSON() string {
 }
 
 func (v *StringValue) StringYAML() string {
-	return strings.Replace(v.Value, "\n", "\\n", -1)
+	return fmt.Sprintf("%q", v.Value)
 }
 
 type NumberValue struct {

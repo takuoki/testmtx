@@ -30,6 +30,15 @@ func (c *ObjectCollection) ExplicitNil(cn ColumnName) bool {
 	return c.ExplicitNils[cn]
 }
 
+func (c *ObjectCollection) FirstProperty(cn ColumnName, pn PropName) bool {
+	for i := 0; i < len(c.PropertyNames); i++ {
+		if !c.Properties[c.PropertyNames[i]].ImplicitNil(cn) {
+			return c.PropertyNames[i] == pn
+		}
+	}
+	return false
+}
+
 func (c *ObjectCollection) LastProperty(cn ColumnName, pn PropName) bool {
 	for i := len(c.PropertyNames) - 1; i >= 0; i-- {
 		if !c.Properties[c.PropertyNames[i]].ImplicitNil(cn) {
@@ -51,6 +60,15 @@ func (c *ArrayCollection) ImplicitNil(cn ColumnName) bool {
 
 func (c *ArrayCollection) ExplicitNil(cn ColumnName) bool {
 	return c.ExplicitNils[cn]
+}
+
+func (c *ArrayCollection) FirstElement(cn ColumnName, i int) bool {
+	for j := 0; j < len(c.Elements); j++ {
+		if !c.Elements[j].ImplicitNil(cn) {
+			return j == i
+		}
+	}
+	return false
 }
 
 func (c *ArrayCollection) LastElement(cn ColumnName, i int) bool {

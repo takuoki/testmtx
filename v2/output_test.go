@@ -8,7 +8,7 @@ import (
 	"github.com/tenntenn/golden"
 )
 
-func TestOutputter_Output(t *testing.T) {
+func TestOutput(t *testing.T) {
 	t.Parallel()
 
 	// set to true when updating the golden file
@@ -34,6 +34,22 @@ func TestOutputter_Output(t *testing.T) {
 			}(),
 			sheet:  sampleParsedSheet(),
 			golden: "oneSheetOneCase_JSON",
+		},
+		"oneColumnOneCaseOutputter: YAML": {
+			o: func() testmtx.Outputter {
+				f, _ := testmtx.NewYAMLFormatter()
+				return testmtx.NewOneColumnOneCaseOutputter(f)
+			}(),
+			sheet:  sampleParsedSheet(),
+			golden: "oneColumnOneCase_YAML",
+		},
+		"oneSheetOneCaseOutputter: YAML": {
+			o: func() testmtx.Outputter {
+				f, _ := testmtx.NewYAMLFormatter()
+				return testmtx.NewOneSheetOneCaseOutputter(f)
+			}(),
+			sheet:  sampleParsedSheet(),
+			golden: "oneSheetOneCase_YAML",
 		},
 		"oneColumnOneCaseOutputter: JSON (include empty)": {
 			o: func() testmtx.Outputter {
