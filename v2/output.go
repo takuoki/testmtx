@@ -14,6 +14,8 @@ type Outputter interface {
 	Output(baseDir string, sheet *Sheet) error
 }
 
+type NewOutputterFunc = func(formatter Formatter) Outputter
+
 type oneColumnOneCaseOutputter struct {
 	formatter Formatter
 }

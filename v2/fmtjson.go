@@ -7,15 +7,13 @@ import (
 
 // JSONFormatter is a fommatter for JSON.
 type JSONFormatter struct {
-	formatter
+	*formatter
 }
 
 // NewJSONFormatter creates a new JSONFormatter.
-// You can change some parameters of the JSONFormatter with JSONFormatOption.
-func NewJSONFormatter(options ...JSONFormatOption) (*JSONFormatter, error) {
-	f := JSONFormatter{
-		formatter{indentStr: defaultIndentStr},
-	}
+// You can change some parameters of the JSONFormatter with FormatOption.
+func NewJSONFormatter(options ...FormatOption) (Formatter, error) {
+	f := JSONFormatter{newFormmater()}
 	for _, opt := range options {
 		err := opt(&f)
 		if err != nil {
@@ -23,17 +21,6 @@ func NewJSONFormatter(options ...JSONFormatOption) (*JSONFormatter, error) {
 		}
 	}
 	return &f, nil
-}
-
-// JSONFormatOption changes some parameters of the JSONFormatter.
-type JSONFormatOption func(*JSONFormatter) error
-
-// JSONIndentStr changes the indent string in JSON file.
-func JSONIndentStr(s string) JSONFormatOption {
-	return func(f *JSONFormatter) error {
-		f.setIndentStr(s)
-		return nil
-	}
 }
 
 func (f *JSONFormatter) Write(w io.Writer, col Collection, cn ColumnName) {

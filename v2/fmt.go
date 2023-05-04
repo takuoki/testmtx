@@ -10,13 +10,31 @@ import (
 type Formatter interface {
 	Write(w io.Writer, col Collection, cn ColumnName)
 	Extension() string
+	setIndentStr(s string)
 }
+
+type NewFormatterFunc func(options ...FormatOption) (Formatter, error)
+
+// FormatOption changes some parameters of the JSONFormatter.
+type FormatOption func(Formatter) error
+
+// IndentStr changes the indent string in JSON file.
+func IndentStr(s string) FormatOption {
+	return func(f Formatter) error {
+		f.setIndentStr(s)
+		return nil
+	}
+}
+
+const defaultIndentStr = "  "
 
 type formatter struct {
 	indentStr string
 }
 
-const defaultIndentStr = "  "
+func newFormmater() *formatter {
+	return &formatter{indentStr: defaultIndentStr}
+}
 
 func (f *formatter) setIndentStr(s string) {
 	if f == nil {

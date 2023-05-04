@@ -7,15 +7,13 @@ import (
 
 // YAMLFormatter is a formatter for YAML.
 type YAMLFormatter struct {
-	formatter
+	*formatter
 }
 
 // NewYAMLFormatter creates a new YAMLFormatter.
-// You can change some parameters of the YAMLFormatter with YAMLFormatOption.
-func NewYAMLFormatter(options ...YAMLFormatOption) (*YAMLFormatter, error) {
-	f := YAMLFormatter{
-		formatter{indentStr: defaultIndentStr},
-	}
+// You can change some parameters of the YAMLFormatter with FormatOption.
+func NewYAMLFormatter(options ...FormatOption) (Formatter, error) {
+	f := YAMLFormatter{newFormmater()}
 	for _, opt := range options {
 		err := opt(&f)
 		if err != nil {
@@ -23,17 +21,6 @@ func NewYAMLFormatter(options ...YAMLFormatOption) (*YAMLFormatter, error) {
 		}
 	}
 	return &f, nil
-}
-
-// YAMLFormatOption changes some parameters of the YAMLFormatter.
-type YAMLFormatOption func(*YAMLFormatter) error
-
-// YAMLIndentStr changes the indent string in YAML file.
-func YAMLIndentStr(s string) YAMLFormatOption {
-	return func(f *YAMLFormatter) error {
-		f.setIndentStr(s)
-		return nil
-	}
 }
 
 func (f *YAMLFormatter) Write(w io.Writer, col Collection, cn ColumnName) {
