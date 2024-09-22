@@ -9,11 +9,13 @@ import (
 	"github.com/takuoki/testmtx/v2"
 )
 
-func GetOutCommand(options ...GetOutCommandOption) (*cli.Command, error) {
-	opts := defaultGetOutCommandOptions
+func NewOutCommand(options ...NewOutCommandOption) (*cli.Command, error) {
+	opts := defaultNewOutCommandOptions
 	for _, o := range options {
 		o(&opts)
 	}
+
+	getSheetNamesFlags, getSheetNamesFunc := opts.getSheetNamesFlagAndFunc()
 
 	parseFlags, newParserFunc, err := getParseFlagAndFunc(opts.additionalSimpleValues, opts.defaultPropLevel)
 	if err != nil {
@@ -43,22 +45,19 @@ func GetOutCommand(options ...GetOutCommandOption) (*cli.Command, error) {
 			Required: true,
 			Usage:    `input spreadsheet filepath (type="excel"), or google spreadsheet ID (type="gs")`,
 		},
-		&cli.StringFlag{
-			Name:     "sheet",
-			Aliases:  []string{"s"},
-			Required: true,
-			Usage:    "input sheet name",
-		},
+	}
+	flags = append(flags, getSheetNamesFlags...)
+	flags = append(flags, parseFlags...)
+	flags = append(flags, formatFlags...)
+	flags = append(flags, layoutFlags...)
+	flags = append(flags,
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
 			Value:   "out",
 			Usage:   "output root directory",
 		},
-	}
-	flags = append(flags, parseFlags...)
-	flags = append(flags, formatFlags...)
-	flags = append(flags, layoutFlags...)
+	)
 
 	return &cli.Command{
 		Name:  "out",
@@ -90,18 +89,25 @@ func GetOutCommand(options ...GetOutCommandOption) (*cli.Command, error) {
 				return fmt.Errorf("fail to create xlsx doc: %w", err)
 			}
 
-			docSheet, err := doc.GetSheet(c.String("sheet"))
+			sheetNames, err := getSheetNamesFunc(c, doc)
 			if err != nil {
-				return fmt.Errorf("fail to get sheet: %w", err)
+				return fmt.Errorf("fail to get sheet names: %w", err)
 			}
 
-			sheet, err := parser.Parse(docSheet)
-			if err != nil {
-				return fmt.Errorf("fail to parse sheet: %w", err)
-			}
+			for _, sheetName := range sheetNames {
+				docSheet, err := doc.GetSheet(sheetName)
+				if err != nil {
+					return fmt.Errorf("fail to get sheet: %w", err)
+				}
 
-			if err := outputter.Output(c.String("out"), sheet); err != nil {
-				return fmt.Errorf("fail to output: %w", err)
+				sheet, err := parser.Parse(docSheet)
+				if err != nil {
+					return fmt.Errorf("fail to parse sheet: %w", err)
+				}
+
+				if err := outputter.Output(c.String("out"), sheet); err != nil {
+					return fmt.Errorf("fail to output: %w", err)
+				}
 			}
 
 			return nil
@@ -109,17 +115,34 @@ func GetOutCommand(options ...GetOutCommandOption) (*cli.Command, error) {
 	}, nil
 }
 
-type getOutCommandOptions struct {
-	additionalSimpleValues map[string]testmtx.ConvertValueFunc
-	defaultPropLevel       int
-	formatters             []Formatter
-	indentStr              string
-	layouts                []Layout
+type GetSheetNamesFlagAndFunc func() (
+	flags []cli.Flag,
+	getSheetNamesFunc func(*cli.Context, testmtx.Doc) ([]string, error),
+)
+
+type Formatter struct {
+	Name    string
+	NewFunc testmtx.NewFormatterFunc
 }
 
-var defaultGetOutCommandOptions = getOutCommandOptions{
-	additionalSimpleValues: nil,
-	defaultPropLevel:       10,
+type Layout struct {
+	Name    string
+	NewFunc testmtx.NewOutputterFunc
+}
+
+type getOutCommandOptions struct {
+	getSheetNamesFlagAndFunc GetSheetNamesFlagAndFunc
+	additionalSimpleValues   map[string]testmtx.ConvertValueFunc
+	defaultPropLevel         int
+	formatters               []Formatter
+	indentStr                string
+	layouts                  []Layout
+}
+
+var defaultNewOutCommandOptions = getOutCommandOptions{
+	getSheetNamesFlagAndFunc: defaultGetSheetNamesFunc,
+	additionalSimpleValues:   nil,
+	defaultPropLevel:         10,
 	formatters: []Formatter{
 		{Name: "json", NewFunc: testmtx.NewJSONFormatter},
 		{Name: "yaml", NewFunc: testmtx.NewYAMLFormatter},
@@ -131,34 +154,186 @@ var defaultGetOutCommandOptions = getOutCommandOptions{
 	},
 }
 
-type GetOutCommandOption func(*getOutCommandOptions)
+func defaultGetSheetNamesFunc() (
+	flags []cli.Flag,
+	getSheetNamesFunc func(*cli.Context, testmtx.Doc) ([]string, error),
+) {
+	return []cli.Flag{
+			&cli.StringFlag{
+				Name:    "sheet",
+				Aliases: []string{"s"},
+				Usage:   "input sheet name (required if --all-sheet is not specified)",
+			},
+			&cli.BoolFlag{
+				Name:    "all-sheet",
+				Aliases: []string{"all"},
+				Usage:   "use all sheets in the file",
+			},
+		}, func(c *cli.Context, doc testmtx.Doc) ([]string, error) {
+			if c.Bool("all-sheet") {
+				sheetNames, err := doc.GetSheetNames()
+				if err != nil {
+					return nil, err
+				}
+				return sheetNames, nil
+			}
+			if sheetName := c.String("sheet"); sheetName != "" {
+				return []string{sheetName}, nil
+			}
 
-func AdditionalSimpleValues(convertValueFuncs map[string]testmtx.ConvertValueFunc) GetOutCommandOption {
+			return nil, errors.New("sheet name is required")
+		}
+}
+
+type NewOutCommandOption func(*getOutCommandOptions)
+
+func GetSheetNamesFlagAndFuncOption(fn GetSheetNamesFlagAndFunc) NewOutCommandOption {
+	return func(o *getOutCommandOptions) {
+		o.getSheetNamesFlagAndFunc = fn
+	}
+}
+
+func AdditionalSimpleValues(convertValueFuncs map[string]testmtx.ConvertValueFunc) NewOutCommandOption {
 	return func(o *getOutCommandOptions) {
 		o.additionalSimpleValues = convertValueFuncs
 	}
 }
 
-func DefaultPropLevel(level int) GetOutCommandOption {
+func DefaultPropLevel(level int) NewOutCommandOption {
 	return func(o *getOutCommandOptions) {
 		o.defaultPropLevel = level
 	}
 }
 
-func Formatters(formatters []Formatter) GetOutCommandOption {
+func Formatters(formatters []Formatter) NewOutCommandOption {
 	return func(o *getOutCommandOptions) {
 		o.formatters = formatters
 	}
 }
 
-func IndentStr(indentStr string) GetOutCommandOption {
+func IndentStr(indentStr string) NewOutCommandOption {
 	return func(o *getOutCommandOptions) {
 		o.indentStr = indentStr
 	}
 }
 
-func Layouts(layouts []Layout) GetOutCommandOption {
+func Layouts(layouts []Layout) NewOutCommandOption {
 	return func(o *getOutCommandOptions) {
 		o.layouts = layouts
 	}
+}
+
+func getParseFlagAndFunc(
+	additionalSimpleValues map[string]testmtx.ConvertValueFunc,
+	defaultPropLevel int,
+) (
+	flags []cli.Flag,
+	newParserFunc func(c *cli.Context) (*testmtx.Parser, error),
+	er error,
+) {
+	return []cli.Flag{
+			&cli.IntFlag{
+				Name:    "proplevel",
+				Aliases: []string{"pl"},
+				Value:   defaultPropLevel,
+				Usage:   "property level (if you extend properties columns, then required)",
+			},
+		}, func(c *cli.Context) (*testmtx.Parser, error) {
+			parser, err := testmtx.NewParser(
+				testmtx.PropLevel(c.Int("proplevel")),
+				testmtx.AdditionalSimpleValues(additionalSimpleValues),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("fail to create parser: %w", err)
+			}
+
+			return parser, nil
+		}, nil
+}
+
+func getFormatFlagAndFunc(formatters []Formatter, indentStr string) (
+	flags []cli.Flag,
+	newFormatterFunc func(c *cli.Context) (testmtx.Formatter, error),
+	er error,
+) {
+	switch len(formatters) {
+	case 0:
+		return nil, nil, errors.New("length of formatters must not be zero")
+	case 1:
+		return nil, func(c *cli.Context) (testmtx.Formatter, error) {
+			f, err := formatters[0].NewFunc(testmtx.IndentStr(indentStr))
+			if err != nil {
+				return nil, fmt.Errorf("fail to create formatter: %w", err)
+			}
+			return f, nil
+		}, nil
+	}
+
+	m := make(map[string]testmtx.NewFormatterFunc, len(formatters))
+	usage := "output format type"
+	for i, fs := range formatters {
+		if _, ok := m[fs.Name]; ok {
+			return nil, nil, fmt.Errorf("format name is duplicated (name: %q)", fs.Name)
+		}
+		m[fs.Name] = fs.NewFunc
+		usage = appendUsageItem(usage, fs.Name, i, len(formatters))
+	}
+
+	return []cli.Flag{
+			&cli.StringFlag{
+				Name:  "format",
+				Value: formatters[0].Name,
+				Usage: usage,
+			},
+		}, func(c *cli.Context) (testmtx.Formatter, error) {
+			fn, ok := m[c.String("format")]
+			if !ok {
+				return nil, errors.New("unsupportted format")
+			}
+			f, err := fn(testmtx.IndentStr(indentStr))
+			if err != nil {
+				return nil, fmt.Errorf("fail to create formatter: %w", err)
+			}
+			return f, nil
+		}, nil
+}
+
+func getLayoutFlagAndFunc(layouts []Layout) (
+	flags []cli.Flag,
+	newOutputterFunc func(c *cli.Context, f testmtx.Formatter) (testmtx.Outputter, error),
+	er error,
+) {
+	switch len(layouts) {
+	case 0:
+		return nil, nil, errors.New("length of layouts must not be zero")
+	case 1:
+		return nil, func(c *cli.Context, f testmtx.Formatter) (testmtx.Outputter, error) {
+			return layouts[0].NewFunc(f), nil
+		}, nil
+	}
+
+	m := make(map[string]testmtx.NewOutputterFunc, len(layouts))
+	usage := "output file layout"
+	for i, ls := range layouts {
+		if _, ok := m[ls.Name]; ok {
+			return nil, nil, fmt.Errorf("layout name is duplicated (name: %q)", ls.Name)
+		}
+		m[ls.Name] = ls.NewFunc
+		usage = appendUsageItem(usage, ls.Name, i, len(layouts))
+	}
+
+	return []cli.Flag{
+			&cli.StringFlag{
+				Name:    "layout",
+				Aliases: []string{"l"},
+				Value:   layouts[0].Name,
+				Usage:   usage,
+			},
+		}, func(c *cli.Context, f testmtx.Formatter) (testmtx.Outputter, error) {
+			fn, ok := m[c.String("layout")]
+			if !ok {
+				return nil, errors.New("unsupportted layout")
+			}
+			return fn(f), nil
+		}, nil
 }

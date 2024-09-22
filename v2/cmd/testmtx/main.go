@@ -14,7 +14,7 @@ const (
 )
 
 func main() {
-	outCommand, err := helper.GetOutCommand()
+	outCommand, err := helper.NewOutCommand()
 	if err != nil {
 		log.Fatal(err)
 	}
