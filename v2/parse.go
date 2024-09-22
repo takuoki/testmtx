@@ -96,12 +96,12 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 	rows := s.Rows()
 
 	if s.Value(p.columnRow, p.columnStart) == "" {
-		return nil, &ParseError{
-			msg:       "first column name is empty",
-			sheet:     pointer(s.Name()),
-			rowNumber: pointer(rows[p.columnRow].Number()),
-			clmLetter: pointer(clmconv.Itoa(p.columnStart)),
-		}
+		return nil, newParseError(
+			"first column name is empty",
+			parseErrorOptionSheetName(s.Name()),
+			parseErrorOptionRowNumber(rows[p.columnRow].Number()),
+			parseErrorOptionColumnLetterIndex(p.columnStart),
+		)
 	}
 
 	// columns
@@ -112,12 +112,12 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 		}
 		for _, n := range sh.ColumnNames {
 			if cn == n {
-				return nil, &ParseError{
-					msg:       fmt.Sprintf("column name (%q) is duplicated", cn),
-					sheet:     pointer(s.Name()),
-					rowNumber: pointer(rows[p.columnRow].Number()),
-					clmLetter: pointer(clmconv.Itoa(ci)),
-				}
+				return nil, newParseError(
+					fmt.Sprintf("column name (%q) is duplicated", cn),
+					parseErrorOptionSheetName(s.Name()),
+					parseErrorOptionRowNumber(rows[p.columnRow].Number()),
+					parseErrorOptionColumnLetterIndex(ci),
+				)
 			}
 		}
 
@@ -130,31 +130,31 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 			continue
 		}
 		if lv := p.propLevel(rows[ri]); lv > 1 {
-			return nil, &ParseError{
-				msg:       "must not exist property that does not belong to the root property",
-				sheet:     pointer(s.Name()),
-				rowNumber: pointer(rows[ri].Number()),
-				clmLetter: pointer(clmconv.Itoa(lv + p.propStartClm - 1)),
-			}
+			return nil, newParseError(
+				"must not exist property that does not belong to the root property",
+				parseErrorOptionSheetName(s.Name()),
+				parseErrorOptionRowNumber(rows[ri].Number()),
+				parseErrorOptionColumnLetterIndex(lv+p.propStartClm-1),
+			)
 		}
 		pn := NewPropName(rows[ri].Value(p.propStartClm))
 		if _, ok := sh.Collections[pn]; ok {
-			return nil, &ParseError{
-				msg:       fmt.Sprintf("root property name (%q) is duplicated", pn),
-				sheet:     pointer(s.Name()),
-				rowNumber: pointer(rows[ri].Number()),
-				clmLetter: pointer(clmconv.Itoa(p.propStartClm)),
-			}
+			return nil, newParseError(
+				fmt.Sprintf("root property name (%q) is duplicated", pn),
+				parseErrorOptionSheetName(s.Name()),
+				parseErrorOptionRowNumber(rows[ri].Number()),
+				parseErrorOptionColumnLetterIndex(p.propStartClm),
+			)
 		}
 		var col Collection
 		var err error
 		col, ri, err = p.parseCollection(rows, ri, 1, sh.ColumnNames)
 		if err != nil {
-			return nil, &ParseError{
-				msg:   fmt.Sprintf("fail to parse root property (%q)", pn),
-				sheet: pointer(s.Name()),
-				err:   err,
-			}
+			return nil, newParseError(
+				"error occurred in root property",
+				parseErrorOptionSheetName(s.Name()),
+				parseErrorOptionBaseError(err),
+			)
 		}
 		sh.Collections[pn] = col
 	}
@@ -210,11 +210,11 @@ func (p *Parser) parseObjectCollection(rows []DocRow, ri, level int, cs []Column
 		case strNew:
 			// do nothing
 		default:
-			return nil, 0, &ParseError{
-				msg:       fmt.Sprintf("invalid object value (%q)", s),
-				rowNumber: pointer(rows[ri].Number()),
-				clmLetter: pointer(clmconv.Itoa(p.columnStart + i)),
-			}
+			return nil, 0, newParseError(
+				fmt.Sprintf("invalid object value (%q)", s),
+				parseErrorOptionRowNumber(rows[ri].Number()),
+				parseErrorOptionColumnLetterIndex(p.columnStart+i),
+			)
 		}
 	}
 
@@ -226,11 +226,11 @@ func (p *Parser) parseObjectCollection(rows []DocRow, ri, level int, cs []Column
 			ri--
 			break
 		} else if lv > level+1 {
-			return nil, 0, &ParseError{
-				msg:       "invalid level of object property",
-				rowNumber: pointer(rows[ri].Number()),
-				clmLetter: pointer(clmconv.Itoa(lv + p.propStartClm - 1)),
-			}
+			return nil, 0, newParseError(
+				"invalid level of object property",
+				parseErrorOptionRowNumber(rows[ri].Number()),
+				parseErrorOptionColumnLetterIndex(lv+p.propStartClm-1),
+			)
 		}
 
 		pn := NewPropName(rows[ri].Value(p.propStartClm + level))
@@ -268,11 +268,11 @@ func (p *Parser) parseArrayCollection(rows []DocRow, ri, level int, cs []ColumnN
 		case strNew:
 			// do nothing
 		default:
-			return nil, 0, &ParseError{
-				msg:       fmt.Sprintf("invalid array value (%q)", s),
-				rowNumber: pointer(rows[ri].Number()),
-				clmLetter: pointer(clmconv.Itoa(p.columnStart + i)),
-			}
+			return nil, 0, newParseError(
+				fmt.Sprintf("invalid array value (%q)", s),
+				parseErrorOptionRowNumber(rows[ri].Number()),
+				parseErrorOptionColumnLetterIndex(p.columnStart+i),
+			)
 		}
 	}
 
@@ -283,11 +283,11 @@ func (p *Parser) parseArrayCollection(rows []DocRow, ri, level int, cs []ColumnN
 			ri--
 			break
 		} else if lv > level+1 {
-			return nil, 0, &ParseError{
-				msg:       "invalid level of array element",
-				rowNumber: pointer(rows[ri].Number()),
-				clmLetter: pointer(clmconv.Itoa(lv + p.propStartClm - 1)),
-			}
+			return nil, 0, newParseError(
+				"invalid level of array element",
+				parseErrorOptionRowNumber(rows[ri].Number()),
+				parseErrorOptionColumnLetterIndex(lv+p.propStartClm-1),
+			)
 		}
 
 		var e Collection
@@ -313,11 +313,11 @@ func (p *Parser) parseSimpleCollection(row DocRow, cs []ColumnName) (*SimpleColl
 
 	convertFunc, ok := p.convertSimpleValueFuncs[row.Value(p.typeClm)]
 	if !ok {
-		return nil, &ParseError{
-			msg:       fmt.Sprintf("invalid type (%q)", row.Value(p.typeClm)),
-			rowNumber: pointer(row.Number()),
-			clmLetter: pointer(clmconv.Itoa(p.typeClm)),
-		}
+		return nil, newParseError(
+			fmt.Sprintf("invalid type (%q)", row.Value(p.typeClm)),
+			parseErrorOptionRowNumber(row.Number()),
+			parseErrorOptionColumnLetterIndex(p.typeClm),
+		)
 	}
 
 	implicitNils := map[ColumnName]bool{}
@@ -333,12 +333,12 @@ func (p *Parser) parseSimpleCollection(row DocRow, cs []ColumnName) (*SimpleColl
 		default:
 			v, err := convertFunc(s)
 			if err != nil {
-				return nil, &ParseError{
-					msg:       "fail to convert simple value",
-					rowNumber: pointer(row.Number()),
-					clmLetter: pointer(clmconv.Itoa(p.columnStart + i)),
-					err:       err,
-				}
+				return nil, newParseError(
+					"fail to convert simple value",
+					parseErrorOptionRowNumber(row.Number()),
+					parseErrorOptionColumnLetterIndex(p.columnStart+i),
+					parseErrorOptionBaseError(err),
+				)
 			}
 			values[cs[i]] = v
 		}
