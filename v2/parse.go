@@ -21,6 +21,7 @@ type Parser struct {
 
 // NewParser creates a new Parser.
 // You can change some parameters of the Parser with ParseOption.
+// TODO: シートの定義に関するパラメータはどこかに定数定義したい。
 func NewParser(options ...ParseOption) (*Parser, error) {
 	p := Parser{
 		dataStartRow:            3,
@@ -57,6 +58,7 @@ func PropLevel(level int) ParseOption {
 }
 
 // AdditionalSimpleValues adds simple values to default simple value list.
+// User can add custom simple values, but cannot overwrite or delete default simple values.
 func AdditionalSimpleValues(convertValueFuncs map[string]ConvertValueFunc) ParseOption {
 	return func(p *Parser) error {
 		for k, v := range convertValueFuncs {
@@ -84,7 +86,7 @@ func (p *Parser) maxPropLevel() int {
 }
 
 // Parse parses the sheet values to the sheet object.
-// TODO: ParseErrorが返されることを明記する。
+// If the sheet is invalid, it returns a `*ParseError`.
 func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 
 	sh := &Sheet{

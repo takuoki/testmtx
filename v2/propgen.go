@@ -1,4 +1,4 @@
 package testmtx
 
-// TODO
+// TODO: implements
 // - Goの型やJSONファイルをインプットにプロパティエリア用のテキストを出力する

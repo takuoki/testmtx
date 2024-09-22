@@ -5,16 +5,21 @@ import (
 	"strconv"
 )
 
-// TODO: コメント
+// SimpleValue is a simple value.
+// User can define custom SimpleValue and add it to the parser
+// by using AdditionalSimpleValues option when generating the parser.
+// See `unixtimeValue` in `sample_test.go` for an example.
 type SimpleValue interface {
 	StringJSON() string
 	StringYAML() string
 }
 
-// TODO: コメント
+// ConvertValueFunc is a function to convert a string to a SimpleValue.
+// See `convertUnixtimeValue` in `sample_test.go` for an example.
 type ConvertValueFunc func(s string) (SimpleValue, error)
 
-// TODO: デフォルト値。カスタムが追加される。
+// User can add custom simple values.
+// But cannot overwrite or delete default simple values.
 var defaultConvertSimpleValueFuncs = map[string]ConvertValueFunc{
 	typeString: convertStringValue,
 	typeNumber: convertNumberValue,
