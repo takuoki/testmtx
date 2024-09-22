@@ -1,7 +1,18 @@
 package testmtx
 
+import "strings"
+
 type ColumnName string
+
+func NewColumnName(name string) ColumnName {
+	return ColumnName(strings.Replace(name, " ", "_", -1))
+}
+
 type PropName string
+
+func NewPropName(name string) PropName {
+	return PropName(strings.Replace(name, " ", "_", -1))
+}
 
 // Sheet is a parsed sheet which matches testmtx format.
 type Sheet struct {

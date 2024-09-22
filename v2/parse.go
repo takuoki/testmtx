@@ -3,7 +3,6 @@ package testmtx
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/takuoki/clmconv"
 )
@@ -107,12 +106,12 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 
 	// columns
 	for ci := p.columnStart; ; ci++ {
-		cn := s.Value(p.columnRow, ci)
+		cn := NewColumnName(s.Value(p.columnRow, ci))
 		if cn == "" {
 			break
 		}
 		for _, n := range sh.ColumnNames {
-			if ColumnName(cn) == n {
+			if cn == n {
 				return nil, &ParseError{
 					msg:       fmt.Sprintf("column name (%q) is duplicated", cn),
 					sheet:     pointer(s.Name()),
@@ -122,7 +121,7 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 			}
 		}
 
-		sh.ColumnNames = append(sh.ColumnNames, ColumnName(strings.Replace(cn, " ", "_", -1)))
+		sh.ColumnNames = append(sh.ColumnNames, cn)
 	}
 
 	// properties
@@ -138,7 +137,7 @@ func (p *Parser) Parse(s DocSheet) (*Sheet, error) {
 				clmLetter: pointer(clmconv.Itoa(lv + p.propStartClm - 1)),
 			}
 		}
-		pn := PropName(strings.Replace(rows[ri].Value(p.propStartClm), " ", "_", -1))
+		pn := NewPropName(rows[ri].Value(p.propStartClm))
 		if _, ok := sh.Collections[pn]; ok {
 			return nil, &ParseError{
 				msg:       fmt.Sprintf("root property name (%q) is duplicated", pn),
@@ -234,7 +233,7 @@ func (p *Parser) parseObjectCollection(rows []DocRow, ri, level int, cs []Column
 			}
 		}
 
-		pn := PropName(rows[ri].Value(p.propStartClm + level))
+		pn := NewPropName(rows[ri].Value(p.propStartClm + level))
 		pNames = append(pNames, pn)
 
 		var err error
