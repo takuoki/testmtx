@@ -22,7 +22,7 @@ func NewOutCommand(options ...NewOutCommandOption) (*cli.Command, error) {
 		return nil, fmt.Errorf("fail to get parse flag and func: %w", err)
 	}
 
-	formatFlags, newFormatterFunc, err := getFormatFlagAndFunc(opts.formatters, opts.indentStr)
+	formatFlags, newFormatterFunc, err := getFormatFlagAndFunc(formatters, opts.indentStr)
 	if err != nil {
 		return nil, fmt.Errorf("fail to get format flag and func: %w", err)
 	}
@@ -134,20 +134,22 @@ type getOutCommandOptions struct {
 	getSheetNamesFlagAndFunc GetSheetNamesFlagAndFunc
 	additionalSimpleValues   map[string]testmtx.ConvertValueFunc
 	defaultPropLevel         int
-	formatters               []Formatter
 	indentStr                string
 	layouts                  []Layout
+}
+
+// When adding a new formatter, you also need to modify `testmtx.SimpleValue` interface.
+// Adding a formatter is assumed to be added to `testmtx`, not as an option.
+var formatters = []Formatter{
+	{Name: "json", NewFunc: testmtx.NewJSONFormatter},
+	{Name: "yaml", NewFunc: testmtx.NewYAMLFormatter},
 }
 
 var defaultNewOutCommandOptions = getOutCommandOptions{
 	getSheetNamesFlagAndFunc: defaultGetSheetNamesFunc,
 	additionalSimpleValues:   nil,
 	defaultPropLevel:         10,
-	formatters: []Formatter{
-		{Name: "json", NewFunc: testmtx.NewJSONFormatter},
-		{Name: "yaml", NewFunc: testmtx.NewYAMLFormatter},
-	},
-	indentStr: "  ",
+	indentStr:                "  ",
 	layouts: []Layout{
 		{Name: "1column-1case", NewFunc: testmtx.NewOneColumnOneCaseOutputter},
 		{Name: "1sheet-1case", NewFunc: testmtx.NewOneSheetOneCaseOutputter},
@@ -202,12 +204,6 @@ func AdditionalSimpleValues(convertValueFuncs map[string]testmtx.ConvertValueFun
 func DefaultPropLevel(level int) NewOutCommandOption {
 	return func(o *getOutCommandOptions) {
 		o.defaultPropLevel = level
-	}
-}
-
-func Formatters(formatters []Formatter) NewOutCommandOption {
-	return func(o *getOutCommandOptions) {
-		o.formatters = formatters
 	}
 }
 
