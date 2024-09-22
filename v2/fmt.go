@@ -15,10 +15,10 @@ type Formatter interface {
 
 type NewFormatterFunc func(options ...FormatOption) (Formatter, error)
 
-// FormatOption changes some parameters of the JSONFormatter.
+// FormatOption changes some parameters of the Formatter.
 type FormatOption func(Formatter) error
 
-// IndentStr changes the indent string in JSON file.
+// IndentStr changes the indent string in file.
 func IndentStr(s string) FormatOption {
 	return func(f Formatter) error {
 		f.setIndentStr(s)
