@@ -1,20 +1,20 @@
 -- sample/case1/in.json --
 {
   "num_key": 101,
-  "string_key": "string value 101",
+  "string_key": "value 1",
   "bool_key": true,
   "object_key": {
     "key1": 201,
-    "key2": "string value 201"
+    "key2": "value 2"
   },
   "array_key": [
     {
       "key3": 301,
-      "key4": "string value 301"
+      "key4": "value 3"
     },
     {
       "key3": 401,
-      "key4": "string value 401"
+      "key4": "value 4"
     }
   ]
 }
@@ -26,7 +26,7 @@
 -- sample/case2/in.json --
 {
   "num_key": 102,
-  "string_key": "string value 201\nmultiline",
+  "string_key": "value 2\nmultiline",
   "object_key": {
     "key1": 202,
     "key2": ""
@@ -44,7 +44,7 @@
   "array_key": [
     {
       "key3": 303,
-      "key4": "string value \"303\""
+      "key4": "value \"3\""
     }
   ]
 }

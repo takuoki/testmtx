@@ -3,6 +3,7 @@ package testmtx_test
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/takuoki/testmtx/v2"
@@ -10,30 +11,45 @@ import (
 
 // propLevel = 5
 func sampleDocSheet() *mockDocSheet {
-	return newMockSheet("sample", [][]string{
-		{},
-		{"", "", "", "", "", "", "", "Data"},
-		{"", "Properties", "", "", "", "", "Type", "case1", "case2", "case3", "case4"},
-		{"", "in", "", "", "", "", "object", "*new", "*new", "*new", "*new"},
-		{"", "", "num_key", "", "", "", "number", "101", "102", "103", "*null"},
-		{"", "", "string_key", "", "", "", "string", "string value 101", "string value 201\nmultiline", "", "*null"},
-		{"", "", "bool_key", "", "", "", "bool", "true", "", "false", "*null"},
-		{"", "", "object_key", "", "", "", "object", "*new", "*new", "", "*null"},
-		{"", "", "", "key1", "", "", "number", "201", "202", "", ""},
-		{"", "", "", "key2", "", "", "string", "string value 201", "*empty", "", ""},
-		{"", "", "array_key", "", "", "", "array", "*new", "", "*new", "*null"},
-		{"", "", "", "* 0", "", "", "object", "*new", "", "*new", ""},
-		{"", "", "", "", "key3", "", "number", "301", "", "303", ""},
-		{"", "", "", "", "key4", "", "string", "string value 301", "", "string value \"303\"", ""},
-		{"", "", "", "* 1", "", "", "object", "*new", "", "", ""},
-		{"", "", "", "", "key3", "", "number", "401", "", "", ""},
-		{"", "", "", "", "key4", "", "string", "string value 401", "", "", ""},
-		{},
-		{},
-		{"", "want", "", "", "", "", "object", "*new", "*new", "*new", "*new"},
-		{"", "", "status", "", "", "", "string", "success", "failure", "failure", "failure"},
-		{"", "", "code", "", "", "", "number", "200", "401", "404", "500"},
-	})
+	raw := `
+|     |            |            |      |      |     |        | Data    |                      |           |         |
+|     | Properties |            |      |      |     | Type   | case1   | case2                | case3     | case4   |
+|     | in         |            |      |      |     | object | *new    | *new                 | *new      | *new    |
+|     |            | num_key    |      |      |     | number | 101     | 102                  | 103       | *null   |
+|     |            | string_key |      |      |     | string | value 1 | value 2<br>multiline |           | *null   |
+|     |            | bool_key   |      |      |     | bool   | true    |                      | false     | *null   |
+|     |            | object_key |      |      |     | object | *new    | *new                 |           | *null   |
+|     |            |            | key1 |      |     | number | 201     | 202                  |           |         |
+|     |            |            | key2 |      |     | string | value 2 | *empty               |           |         |
+|     |            | array_key  |      |      |     | array  | *new    |                      | *new      | *null   |
+|     |            |            | * 0  |      |     | object | *new    |                      | *new      |         |
+|     |            |            |      | key3 |     | number | 301     |                      | 303       |         |
+|     |            |            |      | key4 |     | string | value 3 |                      | value "3" |         |
+|     |            |            | * 1  |      |     | object | *new    |                      |           |         |
+|     |            |            |      | key3 |     | number | 401     |                      |           |         |
+|     |            |            |      | key4 |     | string | value 4 |                      |           |         |
+
+
+|     | want       |            |      |      |     | object | *new    | *new                 | *new      | *new    |
+|     |            | status     |      |      |     | string | success | failure              | failure   | failure |
+|     |            | code       |      |      |     | number | 200     | 401                  | 404       | 500     |
+`
+
+	res := [][]string{}
+	for _, line := range strings.Split(raw, "\n") {
+		values := []string{}
+		for i, v := range strings.Split(line, "|") {
+			if i == 0 || i == len(strings.Split(line, "|"))-1 {
+				continue
+			}
+			values = append(values, strings.Replace(strings.TrimSpace(v), "<br>", "\n", -1))
+		}
+		res = append(res, values)
+	}
+
+	fmt.Println(len(res))
+
+	return newMockSheet("sample", res)
 }
 
 func sampleParsedSheet() *testmtx.Sheet {
@@ -65,8 +81,8 @@ func sampleParsedSheet() *testmtx.Sheet {
 							"case4": true,
 						},
 						Values: map[testmtx.ColumnName]testmtx.SimpleValue{
-							"case1": &testmtx.StringValue{Value: "string value 101"},
-							"case2": &testmtx.StringValue{Value: "string value 201\nmultiline"},
+							"case1": &testmtx.StringValue{Value: "value 1"},
+							"case2": &testmtx.StringValue{Value: "value 2\nmultiline"},
 						},
 					},
 					"bool_key": &testmtx.SimpleCollection{
@@ -108,7 +124,7 @@ func sampleParsedSheet() *testmtx.Sheet {
 								},
 								ExplicitNils: map[testmtx.ColumnName]bool{},
 								Values: map[testmtx.ColumnName]testmtx.SimpleValue{
-									"case1": &testmtx.StringValue{Value: "string value 201"},
+									"case1": &testmtx.StringValue{Value: "value 2"},
 									"case2": &testmtx.StringValue{Value: ""},
 								},
 							},
@@ -148,8 +164,8 @@ func sampleParsedSheet() *testmtx.Sheet {
 										},
 										ExplicitNils: map[testmtx.ColumnName]bool{},
 										Values: map[testmtx.ColumnName]testmtx.SimpleValue{
-											"case1": &testmtx.StringValue{Value: "string value 301"},
-											"case3": &testmtx.StringValue{Value: "string value \"303\""},
+											"case1": &testmtx.StringValue{Value: "value 3"},
+											"case3": &testmtx.StringValue{Value: "value \"3\""},
 										},
 									},
 								},
@@ -182,7 +198,7 @@ func sampleParsedSheet() *testmtx.Sheet {
 										},
 										ExplicitNils: map[testmtx.ColumnName]bool{},
 										Values: map[testmtx.ColumnName]testmtx.SimpleValue{
-											"case1": &testmtx.StringValue{Value: "string value 401"},
+											"case1": &testmtx.StringValue{Value: "value 4"},
 										},
 									},
 								},
