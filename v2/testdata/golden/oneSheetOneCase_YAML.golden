@@ -1,0 +1,42 @@
+-- sample/in/case1.yaml --
+num_key: 101
+string_key: "value 1"
+bool_key: true
+object_key:
+  key1: 201
+  key2: "value 2"
+array_key:
+  - key3: 301
+    key4: "value 3"
+  - key3: 401
+    key4: "value 4"
+-- sample/in/case2.yaml --
+num_key: 102
+string_key: "value 2\nmultiline"
+object_key:
+  key1: 202
+  key2: ""
+-- sample/in/case3.yaml --
+num_key: 103
+bool_key: false
+array_key:
+  - key3: 303
+    key4: "value \"3\""
+-- sample/in/case4.yaml --
+num_key: null
+string_key: null
+bool_key: null
+object_key: null
+array_key: null
+-- sample/want/case1.yaml --
+status: "success"
+code: 200
+-- sample/want/case2.yaml --
+status: "failure"
+code: 401
+-- sample/want/case3.yaml --
+status: "failure"
+code: 404
+-- sample/want/case4.yaml --
+status: "failure"
+code: 500
