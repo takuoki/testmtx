@@ -47,8 +47,6 @@ func sampleDocSheet() *mockDocSheet {
 		res = append(res, values)
 	}
 
-	fmt.Println(len(res))
-
 	return newMockSheet("sample", res)
 }
 

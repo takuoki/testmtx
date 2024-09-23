@@ -13,7 +13,7 @@ func TestExcelDoc(t *testing.T) {
 	// test doc
 	_, err := testmtx.NewExcelDoc("testdata/dummy.xlsx")
 	if assert.NotNil(t, err) {
-		assert.Regexp(t, "^fail to open excel file: ", err.Error())
+		assert.Regexp(t, `^fail to open file \(path="testdata/dummy\.xlsx"\): `, err.Error())
 	}
 
 	doc, err := testmtx.NewExcelDoc("testdata/sample.xlsx")

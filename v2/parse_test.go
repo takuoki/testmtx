@@ -107,6 +107,7 @@ func TestParser_Parse(t *testing.T) {
 				if assert.Nil(t, err) {
 					assert.Equal(t, tt.want, got)
 				} else {
+					// When an assertion fails, output the actual error message.
 					fmt.Println(err.Error())
 				}
 			} else {
