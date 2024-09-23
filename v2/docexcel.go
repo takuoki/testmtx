@@ -13,7 +13,7 @@ type excelDoc struct {
 func NewExcelDoc(filepath string) (Doc, error) {
 	file, err := xlsx.OpenFile(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("fail to open excel file: %w", err)
+		return nil, &OpenFileError{filepath: filepath, err: err}
 	}
 	return &excelDoc{
 		file: file,
@@ -35,7 +35,7 @@ func (d *excelDoc) GetSheet(sheetName string) (DocSheet, error) {
 			sheet: sh,
 		}, nil
 	}
-	return nil, fmt.Errorf("sheet not found (name=%q)", sheetName)
+	return nil, &NotFoundError{msg: fmt.Sprintf("sheet not found (name=%q)", sheetName)}
 }
 
 type excelSheet struct {

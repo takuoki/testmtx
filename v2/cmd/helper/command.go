@@ -66,7 +66,7 @@ func NewOutCommand(options ...NewOutCommandOption) (*cli.Command, error) {
 		Action: func(c *cli.Context) error {
 
 			if c.String("type") != "excel" {
-				return errors.New("unsupportted type")
+				return &UserError{msg: "unsupported type: only 'excel' is supported now"}
 			}
 
 			parser, err := newParserFunc(c)
@@ -86,6 +86,10 @@ func NewOutCommand(options ...NewOutCommandOption) (*cli.Command, error) {
 
 			doc, err := testmtx.NewExcelDoc(c.String("filepath"))
 			if err != nil {
+				var oerr *testmtx.OpenFileError
+				if errors.As(err, &oerr) {
+					return &UserError{msg: oerr.Error()}
+				}
 				return fmt.Errorf("fail to create xlsx doc: %w", err)
 			}
 
@@ -97,15 +101,31 @@ func NewOutCommand(options ...NewOutCommandOption) (*cli.Command, error) {
 			for _, sheetName := range sheetNames {
 				docSheet, err := doc.GetSheet(sheetName)
 				if err != nil {
+					var nerr *testmtx.NotFoundError
+					if errors.As(err, &nerr) {
+						return &UserError{msg: nerr.Error()}
+					}
 					return fmt.Errorf("fail to get sheet: %w", err)
 				}
 
 				sheet, err := parser.Parse(docSheet)
 				if err != nil {
+					var perr *testmtx.ParseError
+					if errors.As(err, &perr) {
+						return &UserError{msg: fmt.Sprintf("parse error: %s", perr.Error())}
+					}
 					return fmt.Errorf("fail to parse sheet: %w", err)
 				}
 
 				if err := outputter.Output(c.String("out"), sheet); err != nil {
+					var cerr *testmtx.CreateFileError
+					if errors.As(err, &cerr) {
+						return &UserError{msg: cerr.Error()}
+					}
+					var derr *testmtx.CreateDirError
+					if errors.As(err, &derr) {
+						return &UserError{msg: derr.Error()}
+					}
 					return fmt.Errorf("fail to output: %w", err)
 				}
 			}
@@ -183,7 +203,7 @@ func defaultGetSheetNamesFunc() (
 				return []string{sheetName}, nil
 			}
 
-			return nil, errors.New("sheet name is required")
+			return nil, &UserError{msg: "sheet name is required (use --sheet or --all-sheet)"}
 		}
 }
 

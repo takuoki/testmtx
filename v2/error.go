@@ -1,10 +1,75 @@
 package testmtx
 
 import (
+	"errors"
 	"fmt"
+	"syscall"
 
 	"github.com/takuoki/clmconv"
 )
+
+// OpenFileError is an error type that occurs when opening a file.
+type OpenFileError struct {
+	filepath string
+	err      error
+}
+
+func (e *OpenFileError) Error() string {
+	var serr syscall.Errno
+	if errors.As(e.err, &serr) {
+		return fmt.Sprintf("fail to open file (path=%q): %s", e.filepath, serr)
+	}
+	return fmt.Sprintf("fail to open file (path=%q): %s", e.filepath, e.err)
+}
+
+func (e *OpenFileError) Unwrap() error {
+	return e.err
+}
+
+// CreateFileError is an error type that occurs when creating a file.
+type CreateFileError struct {
+	filepath string
+	err      error
+}
+
+func (e *CreateFileError) Error() string {
+	var serr syscall.Errno
+	if errors.As(e.err, &serr) {
+		return fmt.Sprintf("fail to create file (path=%q): %s", e.filepath, serr)
+	}
+	return fmt.Sprintf("fail to create file (path=%q): %s", e.filepath, e.err)
+}
+
+func (e *CreateFileError) Unwrap() error {
+	return e.err
+}
+
+// CreateDirError is an error type that occurs when creating a directory.
+type CreateDirError struct {
+	dirpath string
+	err     error
+}
+
+func (e *CreateDirError) Error() string {
+	var serr syscall.Errno
+	if errors.As(e.err, &serr) {
+		return fmt.Sprintf("fail to create directory (path=%q): %s", e.dirpath, serr)
+	}
+	return fmt.Sprintf("fail to create directory (path=%q): %s", e.dirpath, e.err)
+}
+
+func (e *CreateDirError) Unwrap() error {
+	return e.err
+}
+
+// NotFoundError is an error type that occurs when the target is not found.
+type NotFoundError struct {
+	msg string
+}
+
+func (e *NotFoundError) Error() string {
+	return e.msg
+}
 
 // ParseError is an error type that occurs during parsing.
 // `msg` is required, and the others are optional.
@@ -53,52 +118,6 @@ func (e *ParseError) Error() string {
 			}
 		} else {
 			msg = err.Error()
-		}
-
-		if x, ok := err.(interface{ Unwrap() error }); ok {
-			err = x.Unwrap()
-			if err == nil {
-				break
-			}
-		} else {
-			break
-		}
-	}
-
-	return fmt.Sprintf("%s (sheet=%q, cell=\"%s%d\")", msg, sheet, column, row)
-}
-
-// DetailError returns the detail error message.
-// If the error is wrapped, all error messages are concatenated.
-// The error message includes the sheet name and the cell position.
-// If the error is wrapped, the sheet name and the cell position
-// as close as possible to the original error are included.
-func (e *ParseError) DetailError() string {
-
-	msg := ""
-	sheet := ""
-	row := 0
-	column := ""
-
-	var err error = e
-	for {
-		if x, ok := err.(*ParseError); ok {
-			if msg == "" {
-				msg = x.msg
-			} else {
-				msg += fmt.Sprintf(": %s", x.msg)
-			}
-			if x.sheet != nil {
-				sheet = *x.sheet
-			}
-			if x.rowNumber != nil {
-				row = *x.rowNumber
-			}
-			if x.clmLetter != nil {
-				column = *x.clmLetter
-			}
-		} else {
-			msg += fmt.Sprintf(": %s", err.Error())
 		}
 
 		if x, ok := err.(interface{ Unwrap() error }); ok {

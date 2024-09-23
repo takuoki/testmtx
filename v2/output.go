@@ -51,13 +51,13 @@ func (o *oneColumnOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 
 				dir := filepath.Join(baseDir, sheet.Name, string(cn))
 				if err := os.MkdirAll(dir, 0700); err != nil {
-					return fmt.Errorf("fail to create directory: %w", err)
+					return &CreateDirError{dirpath: dir, err: err}
 				}
 
 				fp := filepath.Join(dir, fmt.Sprintf("%s.%s", propName, o.formatter.Extension()))
 				file, err := os.Create(fp)
 				if err != nil {
-					return fmt.Errorf("fail to create file: %w", err)
+					return &CreateFileError{filepath: fp, err: err}
 				}
 				defer file.Close()
 
@@ -93,7 +93,7 @@ func (o *oneSheetOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 	for propName, col := range sheet.Collections {
 		dir := filepath.Join(baseDir, sheet.Name, string(propName))
 		if err := os.MkdirAll(dir, 0700); err != nil {
-			return fmt.Errorf("fail to create directory: %w", err)
+			return &CreateDirError{dirpath: dir, err: err}
 		}
 		eg := &errgroup.Group{}
 		for _, cn := range sheet.ColumnNames {
@@ -114,7 +114,7 @@ func (o *oneSheetOneCaseOutputter) Output(baseDir string, sheet *Sheet) error {
 				fp := filepath.Join(dir, fmt.Sprintf("%s.%s", cn, o.formatter.Extension()))
 				file, err := os.Create(fp)
 				if err != nil {
-					return fmt.Errorf("fail to create file: %w", err)
+					return &CreateFileError{filepath: fp, err: err}
 				}
 				defer file.Close()
 
